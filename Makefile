@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -W -std=c++11 -O2
+CXXFLAGS = -Wall -Wextra -Wpedantic -std=c++11 -O3 -flto -s
 EXEC = sbg2gdl
 OBJECTS = src/options.o src/move.o src/parser.o src/board.o src/piece.o src/goals.o
 
