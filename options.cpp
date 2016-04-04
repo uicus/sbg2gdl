@@ -48,7 +48,7 @@ optimisation_level(0),
 output_name("a.gdl"){
 }
 
-options::options(uint number_of_args, char** args)throw(wrong_argument_error):
+options::options(uint number_of_args, const char** args)throw(wrong_argument_error):
 just_verify(false),
 optimise_domain(false),
 optimisation_level(0),

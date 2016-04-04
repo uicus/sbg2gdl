@@ -14,7 +14,7 @@ typedef std::pair<uint, std::pair<goals, goals>> all_goals_type;
 
 std::pair<std::pair<board,std::vector<piece>>,all_goals_type> parse_file(const std::string& file_name)throw(std::exception);
 
-int main(int argc, char** argv){
+int main(int argc, const char** argv){
     if(argc < 2){
         std::cerr<<"No input specified"<<std::endl;
     }
