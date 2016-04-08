@@ -39,6 +39,8 @@ int main(int argc, const char** argv){
 
 std::pair<std::pair<board,std::vector<piece>>,all_goals_type> parse_file(const std::string& file_name, std::vector<warning>& warnings_list)throw(std::exception){
     std::ifstream input_file(file_name);
+    if(!input_file.good())
+        throw parse_error("Couldn't open input file");
     parser p(&input_file);
     std::string game_name;
     while(!p.expect_whitespace())
