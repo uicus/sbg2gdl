@@ -6,9 +6,9 @@
 
 #include"types.hpp"
 #include"parser.hpp"
+#include"parser_events.hpp"
 
-class board_parse_error : public std::exception{
-        std::string description;
+class board_parse_error : public parse_error{
     public:
         board_parse_error(void);
         board_parse_error(uint line, uint character, const char* description);
@@ -35,9 +35,11 @@ class board{
         bool inside(uint x, uint y)const;
         uint get_width(void)const;
         uint get_height(void)const;
-        friend std::pair<board, std::unordered_set<char>> parse_board(parser& input)throw(board_parse_error);
+        friend std::pair<board, std::unordered_set<char>> parse_board(parser& p, std::vector<warning>& warnigns_list)throw(board_parse_error);
 };
 
-std::pair<board, std::unordered_set<char>> parse_board(parser& input)throw(board_parse_error);
+std::pair<board, std::unordered_set<char>> parse_board(
+    parser& p,
+    std::vector<warning>& warnigns_list)throw(board_parse_error);
 
 #endif

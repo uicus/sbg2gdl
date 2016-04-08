@@ -7,9 +7,9 @@
 
 #include"parser.hpp"
 #include"board.hpp"
+#include"parser_events.hpp"
 
-class goals_parse_error : public std::exception{
-        std::string description;
+class goals_parse_error : public parse_error{
     public:
         goals_parse_error(void);
         goals_parse_error(uint line, uint character, const char* description);
@@ -37,6 +37,10 @@ class goals{
         void add_piece_capture_goal(char symbol, uint number_of_pieces);
 };
 
-std::pair<uint, std::pair<goals, goals>> parse_goals(parser& p, const std::unordered_set<char>& declared_pieces, const board& declared_board)throw(goals_parse_error);
+std::pair<uint, std::pair<goals, goals>> parse_goals(
+    parser& p,
+    std::vector<warning>& warnings_list,
+    const std::unordered_set<char>& declared_pieces,
+    const board& declared_board)throw(goals_parse_error);
 
 #endif

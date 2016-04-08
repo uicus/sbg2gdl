@@ -1,33 +1,35 @@
 #include"goals.hpp"
 
 goals_parse_error::goals_parse_error(void):
-std::exception(),
-description("Wrong argument error"){
+parse_error("Goals parse error"){
 }
 
 goals_parse_error::goals_parse_error(uint line, uint character, const char* source):
-std::exception(),
-description("Line "+std::to_string(line)+", character "+std::to_string(character)+": "+source){
+parse_error(line, character, source){
 }
 
 goals_parse_error::goals_parse_error(const goals_parse_error& source):
-std::exception(),
-description(source.description){
+parse_error(source){
 }
 
 goals_parse_error& goals_parse_error::operator=(const goals_parse_error& source){
+    if(this == &source)
+        return *this;
+    line_number = source.line_number;
+    char_number = source.char_number;
     description = source.description;
     return *this;
 }
 
 goals_parse_error::goals_parse_error(goals_parse_error&& source):
-std::exception(),
-description(std::move(source.description)){
+parse_error(std::move(source)){
 }
 
 goals_parse_error& goals_parse_error::operator=(goals_parse_error&& source){
     if(this == &source)
         return *this;
+    line_number = source.line_number;
+    char_number = source.char_number;
     description = std::move(source.description);
     return *this;
 }
@@ -36,7 +38,7 @@ goals_parse_error::~goals_parse_error(void){
 }
 
 const char* goals_parse_error::what(void)const noexcept{
-    return description.c_str();
+    return ("Goals parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description).c_str();
 }
 
 goals::goals(void):
@@ -83,12 +85,16 @@ void goals::add_piece_capture_goal(char symbol, uint number_of_pieces){
     piece_capture[symbol] = number_of_pieces;
 }
 
-std::pair<uint, std::pair<goals, goals>> parse_goals(parser& p, const std::unordered_set<char>& declared_pieces, const board& declared_board)throw(goals_parse_error){
+std::pair<uint, std::pair<goals, goals>> parse_goals(
+    parser& p,
+    std::vector<warning>& warnings_list,
+    const std::unordered_set<char>& declared_pieces,
+    const board& declared_board)throw(goals_parse_error){
     uint turns_limit;
     goals uppercase_player_goals;
     goals lowercase_player_goals;
     if(!p.expect_string("<--GOALS-->"))
-        throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Goals declaration must begin with \'<--GOALS-->\' string");
+        throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Goals segment must begin with \'<--GOALS-->\' string");
     p.expect_whitespace();
     parser_result<int> turns_limit_result = p.expect_int();
     if(!turns_limit_result)
@@ -101,7 +107,9 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(parser& p, const std::unord
         throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Turns limit must be terminated with \'&\'");
     p.expect_whitespace();
     char next_char = p.expect_plain_char();
+    bool ignore;
     while(next_char == '@' || next_char == '#'){
+        ignore = false;
         if(next_char == '@'){
             next_char = p.expect_plain_char();
             bool uppercase_player;
@@ -113,8 +121,10 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(parser& p, const std::unord
             }
             else
                 throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected letter after \'@\'");
-            if(!declared_pieces.count(next_char))
-                throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Undeclared piece (piece doesn't appear in the previous board declaration)");
+            if(!declared_pieces.count(next_char)){
+                ignore = true;
+                warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "Undeclared piece (piece doesn't appear in the previous board declaration)"));
+            }
             do{
                 p.expect_whitespace();
                 parser_result<int> x_result = p.expect_int();
@@ -130,11 +140,13 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(parser& p, const std::unord
                 if(y_result.result < 0)
                     throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "y coordinate must be non-negative");
                 if(!declared_board.inside(x_result.result, y_result.result))
-                    throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Given point is outside the board");
-                if(uppercase_player)
-                    uppercase_player_goals.add_piece_placement_goal(next_char, x_result.result, y_result.result);
-                else
-                    lowercase_player_goals.add_piece_placement_goal(next_char, x_result.result, y_result.result);
+                    warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "Given point is outside the board"));
+                if(!ignore){
+                    if(uppercase_player)
+                        uppercase_player_goals.add_piece_placement_goal(next_char, x_result.result, y_result.result);
+                    else
+                        lowercase_player_goals.add_piece_placement_goal(next_char, x_result.result, y_result.result);
+                }
                 p.expect_whitespace();
                 next_char = p.expect_plain_char();
                 if(next_char != ',' && next_char != '&')
@@ -152,23 +164,28 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(parser& p, const std::unord
             }
             else
                 throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected letter after \'#\'");
-            if(!declared_pieces.count(next_char))
-                throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Undeclared piece (piece doesn't appear in the previous board declaration)");
+            if(!declared_pieces.count(next_char)){
+                ignore = true;
+                warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "Undeclared piece (piece doesn't appear in the previous board declaration)"));
+            }
             p.expect_whitespace();
             parser_result<int> number_of_pieces_result = p.expect_int();
             if(!number_of_pieces_result)
                 throw goals_parse_error(number_of_pieces_result.info.line_number, number_of_pieces_result.info.char_number, number_of_pieces_result.info.human_readable_info.c_str());
             if(number_of_pieces_result.result < 1)
                 throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Number of piece captures must be positive");
-            if(uppercase_player)
-                uppercase_player_goals.add_piece_capture_goal(next_char, number_of_pieces_result.result);
-            else
-                lowercase_player_goals.add_piece_capture_goal(next_char, number_of_pieces_result.result);
+            if(!ignore){
+                if(uppercase_player)
+                    uppercase_player_goals.add_piece_capture_goal(next_char, number_of_pieces_result.result);
+                else
+                    lowercase_player_goals.add_piece_capture_goal(next_char, number_of_pieces_result.result);
+            }
             p.expect_whitespace();
             if(p.expect_plain_char()!='&')
                 throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Capture goal must be terminated with \'&\'");
         }
         p.expect_whitespace();
+        next_char = p.expect_plain_char();
     }
     return std::make_pair(turns_limit, std::make_pair(std::move(uppercase_player_goals), std::move(lowercase_player_goals)));
 }

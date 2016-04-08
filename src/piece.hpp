@@ -6,9 +6,9 @@
 
 #include"move.hpp"
 #include"parser.hpp"
+#include"parser_events.hpp"
 
-class piece_parse_error : public std::exception{
-        std::string description;
+class piece_parse_error : public parse_error{
     public:
         piece_parse_error(void);
         piece_parse_error(uint line, uint character, const char* description);
@@ -33,6 +33,9 @@ class piece{
         ~piece(void);
 };
 
-std::vector<piece> parse_pieces(parser& p, const std::unordered_set<char>& declared_pieces)throw(piece_parse_error);
+std::vector<piece> parse_pieces(
+    parser& p,
+    std::vector<warning>& warnigns_list,
+    const std::unordered_set<char>& declared_pieces)throw(piece_parse_error);
 
 #endif

@@ -23,6 +23,8 @@ class wrong_argument_error : public std::exception{
 class options{
         bool just_verify : 1;
         bool optimise_domain : 1;
+        bool show_warnings : 1;
+        bool warnings_as_errors : 1;
         uint optimisation_level : 2;
         std::string output_name;
     public:
@@ -36,6 +38,8 @@ class options{
 
         bool verifying(void)const;
         bool domain_optimising(void)const;
+        bool showing_warnings(void)const;
+        bool escalating_warnings(void)const;
         uint optimising(void)const;
         const std::string& output_file(void)const;
 };

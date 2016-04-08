@@ -38,7 +38,6 @@ class parser{
         fallback_point save_fallback_point(void)const;
         parser_info dump_parser_info(std::string&& info)const;
         void fall_back(const fallback_point& fbp);
-        void go_back(void);
         char pointed_char(void)const;
         bool end_of_buffer(void)const;
         bool end_of_line(void)const;
@@ -62,6 +61,8 @@ class parser{
 
         uint get_line_number(void)const;
         uint get_char_in_line_number(void)const;
+
+        void go_back(void);
 
         // following methods falls_back when failed to find expected pattern
         bool expect_string(const std::string& str);

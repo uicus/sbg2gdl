@@ -1,33 +1,35 @@
 #include"board.hpp"
 
 board_parse_error::board_parse_error(void):
-std::exception(),
-description("Wrong argument error"){
+parse_error("Board parse error"){
 }
 
 board_parse_error::board_parse_error(uint line, uint character, const char* source):
-std::exception(),
-description("Line "+std::to_string(line)+", character "+std::to_string(character)+": "+source){
+parse_error(line, character, source){
 }
 
 board_parse_error::board_parse_error(const board_parse_error& source):
-std::exception(),
-description(source.description){
+parse_error(source){
 }
 
 board_parse_error& board_parse_error::operator=(const board_parse_error& source){
+    if(this == &source)
+        return *this;
+    line_number = source.line_number;
+    char_number = source.char_number;
     description = source.description;
     return *this;
 }
 
 board_parse_error::board_parse_error(board_parse_error&& source):
-std::exception(),
-description(std::move(source.description)){
+parse_error(std::move(source)){
 }
 
 board_parse_error& board_parse_error::operator=(board_parse_error&& source){
     if(this == &source)
         return *this;
+    line_number = source.line_number;
+    char_number = source.char_number;
     description = std::move(source.description);
     return *this;
 }
@@ -36,7 +38,7 @@ board_parse_error::~board_parse_error(void){
 }
 
 const char* board_parse_error::what(void)const noexcept{
-    return description.c_str();
+    return ("Board parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description).c_str();
 }
 
 board::board(uint w, uint h):
@@ -84,10 +86,12 @@ uint board::get_height(void)const{
     return fields.size();
 }
 
-std::pair<board, std::unordered_set<char>> parse_board(parser& p)throw(board_parse_error){
+std::pair<board, std::unordered_set<char>> parse_board(
+    parser& p,
+    std::vector<warning>& warnings_list)throw(board_parse_error){
     std::unordered_set<char> pieces_set;
     if(!p.expect_string("<--BOARD-->"))
-        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Board declaration must begin with \'<--BOARD-->\' string");
+        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Board segment must begin with \'<--BOARD-->\' string");
     p.expect_whitespace();
     parser_result<int> width_result = p.expect_int();
     if(!width_result)
@@ -118,7 +122,7 @@ std::pair<board, std::unordered_set<char>> parse_board(parser& p)throw(board_par
             pieces_set.insert(toupper(next_char));
         }
         if(p.get_line_number()!=line_number)
-            throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong line");
+            warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong line"));
         expected_fields_alignment[i] = p.get_char_in_line_number();
         p.expect_whitespace();
     }
@@ -136,9 +140,9 @@ std::pair<board, std::unordered_set<char>> parse_board(parser& p)throw(board_par
                 pieces_set.insert(toupper(next_char));
             }
             if(p.get_line_number()!=line_number)
-                throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong line");
+                 warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong line"));
             if(p.get_char_in_line_number()!=expected_fields_alignment[j])
-                throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong column");
+                 warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong column"));
             p.expect_whitespace();
         }
     }
