@@ -75,6 +75,10 @@ piece& piece::operator=(piece&& src){
 piece::~piece(void){
 }
 
+char piece::get_symbol(void)const{
+    return symbol;
+}
+
 std::vector<piece> parse_pieces(
     parser& p,
     std::vector<warning>& warnings_list,

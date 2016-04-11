@@ -31,6 +31,8 @@ class piece{
         piece(piece&& src);
         piece& operator=(piece&& src);
         ~piece(void);
+
+        char get_symbol(void)const;
 };
 
 std::vector<piece> parse_pieces(
