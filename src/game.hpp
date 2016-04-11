@@ -3,6 +3,7 @@
 
 #include<vector>
 #include<string>
+#include<fstream>
 
 #include"board.hpp"
 #include"piece.hpp"
@@ -24,6 +25,8 @@ class game{
             uint limit,
             goals&& u_goals,
             goals&& l_goals);
+        void write_steps_logic(std::ofstream& out)const;
+        void write_arithmetic(std::ofstream& out, uint max_number)const;
     public:
         game(const game& src);
         game& operator=(const game& src);

@@ -1,6 +1,4 @@
-#include<fstream>
 #include<unordered_set>
-#include<ostream>
 
 #include"game.hpp"
 #include"parser.hpp"
@@ -90,6 +88,19 @@ game parse_game(const std::string& file_name, std::vector<warning>& warnings_lis
         std::move(g.second.second));
 }
 
+void game::write_steps_logic(std::ofstream& out)const{
+    for(uint i=1;i<=turns_limit;++i)
+        out<<"(succ "<<i<<' '<<i+1<<")\n";
+}
+
+void game::write_arithmetic(std::ofstream& out, uint less_than_number)const{
+    for(uint i=0;i<less_than_number;++i)
+        out<<"(arithmeticSucc "<<i<<' '<<i+1<<")\n";
+    out<<"\n(<= (sum ?x 0 ?x)\n\t(arithmeticSucc ?x ?y))\n";
+    out<<"(<= (sum ?x 0 ?x)\n\t(arithmeticSucc ?y ?x))\n";
+    out<<"(<= (sum ?x ?y ?z)\n\t(arithmeticSucc ?x ?succx)\n\t(arithmeticSucc ?prevy ?y)\n\t(sum ?succx ?prevy ?z))\n";
+}
+
 std::string separator = ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
 
 void game::write_as_gdl(const std::string& output_file_name){
@@ -113,9 +124,25 @@ void game::write_as_gdl(const std::string& output_file_name){
     out<<";; Input\n";
     out<<separator<<'\n';
     out<<"(<= (input ?player noop)\n\t(role ?player))\n";
-    for(auto& el: piece_moves){
-        out<<"(<= (input uppercasePlayer (move "<<el.get_symbol()<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<el.get_symbol()<<"Move ?x1 ?y1 ?x2 ?y2))\n";
-        char lower_piece = tolower(el.get_symbol());
-        out<<"(<= (input lowercasePlayer (move "<<lower_piece<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<lower_piece<<"Move ?x1 ?y1 ?x2 ?y2))\n";
-    }
+    for(const auto& el: piece_moves)
+        el.write_possible_input(out);
+    out<<'\n'<<separator;
+    out<<";; Initial state\n";
+    out<<separator<<'\n';
+    brd.write_initial_state(out);
+    out<<"\n(init (step 1))\n";
+    out<<"\n(init (control uppercasePlayer))\n";
+    out<<'\n'<<separator;
+    out<<";; Artithmetic\n";
+    out<<separator<<'\n';
+    write_arithmetic(out,std::max(brd.get_height(),brd.get_width()));
+    out<<'\n'<<separator;
+    out<<";; Board definition\n";
+    out<<separator<<'\n';
+    brd.write_files_logic(out);
+    brd.write_ranks_logic(out);
+    out<<'\n'<<separator;
+    out<<";; Steps counter\n";
+    out<<separator<<'\n';
+    write_steps_logic(out);
 }

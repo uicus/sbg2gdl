@@ -121,3 +121,9 @@ std::vector<piece> parse_pieces(
         warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "There are some pieces without definitions remaining at the end of pieces segment"));
     return result;
 }
+
+void piece::write_possible_input(std::ofstream& out)const{
+    out<<"(<= (input uppercasePlayer (move "<<symbol<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<symbol<<"Move ?x1 ?y1 ?x2 ?y2))\n";
+    char lower_piece = tolower(symbol);
+    out<<"(<= (input lowercasePlayer (move "<<lower_piece<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<lower_piece<<"Move ?x1 ?y1 ?x2 ?y2))\n";
+}

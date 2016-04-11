@@ -3,6 +3,7 @@
 
 #include<unordered_set>
 #include<vector>
+#include<fstream>
 
 #include"types.hpp"
 #include"parser.hpp"
@@ -36,6 +37,9 @@ class board{
         uint get_width(void)const;
         uint get_height(void)const;
         friend std::pair<board, std::unordered_set<char>> parse_board(parser& p, std::vector<warning>& warnigns_list)throw(board_parse_error);
+        void write_initial_state(std::ofstream& out)const;
+        void write_ranks_logic(std::ofstream& out)const;
+        void write_files_logic(std::ofstream& out)const;
 };
 
 std::pair<board, std::unordered_set<char>> parse_board(

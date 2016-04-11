@@ -3,6 +3,7 @@
 
 #include<unordered_set>
 #include<vector>
+#include<fstream>
 
 #include"move.hpp"
 #include"parser.hpp"
@@ -33,6 +34,7 @@ class piece{
         ~piece(void);
 
         char get_symbol(void)const;
+        void write_possible_input(std::ofstream& out)const;
 };
 
 std::vector<piece> parse_pieces(

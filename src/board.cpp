@@ -114,9 +114,9 @@ std::pair<board, std::unordered_set<char>> parse_board(
         next_char = p.expect_plain_char();
         if(next_char!='.'){
             if(isupper(next_char))
-                result.fields[0][i] = std::make_pair(true, next_char);
+                result.fields[result.fields.size()-1][i] = std::make_pair(true, next_char);
             else if(islower(next_char))
-                result.fields[0][i] = std::make_pair(false, toupper(next_char));
+                result.fields[result.fields.size()-1][i] = std::make_pair(false, toupper(next_char));
             else
                 throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected \'.\' or letter");
             pieces_set.insert(toupper(next_char));
@@ -132,9 +132,9 @@ std::pair<board, std::unordered_set<char>> parse_board(
             next_char = p.expect_plain_char();
             if(next_char!='.'){
                 if(isupper(next_char))
-                    result.fields[0][i] = std::make_pair(true, next_char);
+                    result.fields[result.fields.size()-i-1][j] = std::make_pair(true, next_char);
                 else if(islower(next_char))
-                    result.fields[0][i] = std::make_pair(false, toupper(next_char));
+                    result.fields[result.fields.size()-i-1][j] = std::make_pair(false, toupper(next_char));
                 else
                     throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected \'.\' or letter");
                 pieces_set.insert(toupper(next_char));
@@ -147,4 +147,21 @@ std::pair<board, std::unordered_set<char>> parse_board(
         }
     }
     return std::make_pair(std::move(result), std::move(pieces_set));
+}
+
+void board::write_initial_state(std::ofstream& out)const{
+    for(uint i=0;i<fields.size();++i)
+        for(uint j=0;j<width;++j)
+            if(fields[i][j].second != '.')
+                out<<"(init (cell "<<j<<' '<<i<<' '<<(fields[i][j].first ? fields[i][j].second : char(tolower(fields[i][j].second)))<<"))\n";
+}
+
+void board::write_ranks_logic(std::ofstream& out)const{
+    for(uint i=0;i<fields.size();++i)
+        out<<"(rank "<<i<<")\n";
+}
+
+void board::write_files_logic(std::ofstream& out)const{
+    for(uint i=0;i<width;++i)
+        out<<"(file "<<i<<")\n";
 }
