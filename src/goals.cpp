@@ -125,6 +125,7 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
                 ignore = true;
                 warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "Undeclared piece (piece doesn't appear in the previous board declaration)"));
             }
+            char piece_symbol = next_char;
             do{
                 p.expect_whitespace();
                 parser_result<int> x_result = p.expect_int();
@@ -139,13 +140,15 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
                     throw goals_parse_error(y_result.info.line_number, y_result.info.char_number, y_result.info.human_readable_info.c_str());
                 if(y_result.result < 0)
                     throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "y coordinate must be non-negative");
-                if(!declared_board.inside(x_result.result, y_result.result))
+                if(!declared_board.inside(x_result.result, y_result.result)){
+                    ignore = true;
                     warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "Given point is outside the board"));
+                }
                 if(!ignore){
                     if(uppercase_player)
-                        uppercase_player_goals.add_piece_placement_goal(next_char, x_result.result, y_result.result);
+                        uppercase_player_goals.add_piece_placement_goal(piece_symbol, x_result.result, y_result.result);
                     else
-                        lowercase_player_goals.add_piece_placement_goal(next_char, x_result.result, y_result.result);
+                        lowercase_player_goals.add_piece_placement_goal(piece_symbol, x_result.result, y_result.result);
                 }
                 p.expect_whitespace();
                 next_char = p.expect_plain_char();
@@ -188,4 +191,36 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
         next_char = p.expect_plain_char();
     }
     return std::make_pair(turns_limit, std::make_pair(std::move(uppercase_player_goals), std::move(lowercase_player_goals)));
+}
+
+bool goals::has_any_capture_goal(void)const{
+    return piece_capture.size() > 0;
+}
+
+void goals::write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces)const{
+    for(const auto& el: piece_capture)
+        out<<"(captureCounterStep "<<(capturing_lower_pieces ? char(tolower(el.first)) : el.first)<<" 0 1)\n";
+    out<<'\n';
+    for(const auto& el: piece_capture)
+        out<<"(captureToWin "<<(capturing_lower_pieces ? char(tolower(el.first)) : el.first)<<' '<<el.second<<")\n";
+}
+
+void goals::write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces)const{
+    for(const auto& el: piece_capture)
+        out<<"(init (captureCounter "<<(capturing_lower_pieces ? char(tolower(el.first)) : el.first)<<" 0))\n";
+}
+
+bool goals::has_any_breakthrough_goal(void)const{
+    return piece_placement.size() > 0;
+}
+
+void goals::write_breakthrough_detection(std::ofstream& out, bool uppercase)const{
+    for(const auto& el: piece_placement){
+        out<<'\n';
+        std::string correct_case = (uppercase ? "uppercase" : "lowercase");
+        for(const auto& coords: el.second){
+            out<<"(<= (next ("<<correct_case<<"BrokeThrough T))";
+            out<<"\n\t(does "<<correct_case<<"Player (move "<<(uppercase ? el.first : char(tolower(el.first)))<<" ?x ?y "<<coords.first<<' '<<coords.second<<")))\n";
+        }
+    }
 }

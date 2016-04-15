@@ -4,6 +4,7 @@
 #include<vector>
 #include<unordered_map>
 #include<unordered_set>
+#include<fstream>
 
 #include"parser.hpp"
 #include"board.hpp"
@@ -35,6 +36,13 @@ class goals{
 
         void add_piece_placement_goal(char symbol, uint x, uint y);
         void add_piece_capture_goal(char symbol, uint number_of_pieces);
+
+        bool has_any_capture_goal(void)const;
+        void write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces)const;
+        void write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces)const;
+
+        bool has_any_breakthrough_goal(void)const;
+        void write_breakthrough_detection(std::ofstream& out, bool uppercase)const;
 };
 
 std::pair<uint, std::pair<goals, goals>> parse_goals(
