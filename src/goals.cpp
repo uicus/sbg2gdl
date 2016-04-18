@@ -219,7 +219,7 @@ void goals::write_breakthrough_detection(std::ofstream& out, bool uppercase)cons
         out<<'\n';
         std::string correct_case = (uppercase ? "uppercase" : "lowercase");
         for(const auto& coords: el.second){
-            out<<"(<= (next ("<<correct_case<<"BrokeThrough T))";
+            out<<"(<= (next "<<correct_case<<"BrokeThrough)";
             out<<"\n\t(does "<<correct_case<<"Player (move "<<(uppercase ? el.first : char(tolower(el.first)))<<" ?x ?y "<<coords.first<<' '<<coords.second<<")))\n";
         }
     }

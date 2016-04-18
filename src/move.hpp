@@ -3,6 +3,7 @@
 
 #include<vector>
 #include<string>
+#include<fstream>
 
 #include"types.hpp"
 
@@ -11,6 +12,11 @@ enum on{
     enemy, // p
     own // w
 };
+
+class moves_concatenation;
+class bracketed_move;
+class moves_sum;
+typedef moves_sum move;
 
 class single_move{
         int x_delta;
@@ -26,9 +32,15 @@ class single_move{
         ~single_move(void);
 
         std::string to_string(void)const;
-};
 
-class moves_concatenation;
+        void write_as_gdl(
+            std::ofstream& out,
+            bool uppercase_player,
+            const std::string& start_x_name,
+            const std::string& start_y_name,
+            const std::string& end_x_name,
+            const std::string& end_y_name)const;
+};
 
 class moves_sum{
         std::vector<moves_concatenation> m;
@@ -51,9 +63,18 @@ class moves_sum{
         moves_sum& decrement(void);
         moves_sum& set_star(void);
         moves_sum& set_number(uint number_of_repetitions);
-};
 
-class bracketed_move;
+        void write_as_gdl(
+            std::ofstream& out,
+            std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+            const std::string& move_name,
+            bool uppercase_player,
+            const std::string& start_x_name,
+            const std::string& start_y_name,
+            const std::string& end_x_name,
+            const std::string& end_y_name,
+            uint& next_free_id)const;
+};
 
 class moves_concatenation{
         std::vector<bracketed_move> m;
@@ -75,6 +96,17 @@ class moves_concatenation{
         moves_concatenation& decrement(void);
         moves_concatenation& set_star(void);
         moves_concatenation& set_number(uint number_of_repetitions);
+
+        void write_as_gdl(
+            std::ofstream& out,
+            std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+            const std::string& move_name,
+            bool uppercase_player,
+            const std::string& start_x_name,
+            const std::string& start_y_name,
+            const std::string& end_x_name,
+            const std::string& end_y_name,
+            uint& next_free_id)const;
 };
 
 class bracketed_move{
@@ -101,8 +133,17 @@ class bracketed_move{
         bracketed_move& decrement(void);
         bracketed_move& set_star(void);
         bracketed_move& set_number(uint number);
-};
 
-typedef moves_sum move;
+        void write_as_gdl(
+            std::ofstream& out,
+            std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+            const std::string& move_name,
+            bool uppercase_player,
+            const std::string& start_x_name,
+            const std::string& start_y_name,
+            const std::string& end_x_name,
+            const std::string& end_y_name,
+            uint& next_free_id)const;
+};
 
 #endif

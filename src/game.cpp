@@ -100,21 +100,22 @@ void game::write_arithmetic(std::ofstream& out, uint less_than_number)const{
     out<<"(<= (sum ?x 0 ?x)\n\t(arithmeticSucc ?y ?x))\n";
     out<<"(<= (sum ?x ?y ?z)\n\t(arithmeticSucc ?x ?succx)\n\t(arithmeticSucc ?prevy ?y)\n\t(sum ?succx ?prevy ?z))\n";
     out<<"\n(<= (sub ?x ?y ?z)\n\t(sum ?z ?y ?x))\n";
+    out<<"\n(equal ?x ?x)\n";
 }
 
 void game::write_base(std::ofstream& out)const{
     out<<"(<= (base (control ?p))\n\t(role ?p))\n\n";
     out<<"(base (step 1))\n";
     out<<"(<= (base (step ?next))\n\t(succ ?s ?next))\n\n";
-    out<<"(<= (base (cell ?x ?y ?piece))\n\t(file ?x)\n\t(rank ?y)\n\t(pieceType ?piece))\n\n";
+    out<<"(<= (base (cell ?x ?y ?piece))\n\t(file ?x)\n\t(rank ?y)\n\t(pieceType ?piece))\n";
     if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal()){
-        out<<"(<= (base (captureCounter ?piece 0))\n\t(captureCounterStep ?piece ?n ?succn))\n";
+        out<<"\n(<= (base (captureCounter ?piece 0))\n\t(captureCounterStep ?piece ?n ?succn))\n";
         out<<"(<= (base (captureCounter ?piece ?n))\n\t(captureCounterStep ?piece ?prevn ?n))\n";
     }
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"(base (uppercaseBrokeThrough T))\n(base (uppercaseBrokeThrough F))\n\n";
+        out<<"\n(base uppercaseBrokeThrough)\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"(base (lowercaseBrokeThrough T))\n(base (lowercaseBrokeThrough F))\n\n";
+        out<<"\n(base lowercaseBrokeThrough)\n";
 }
 
 void game::write_input(std::ofstream& out)const{
@@ -133,10 +134,10 @@ void game::write_initial_state(std::ofstream& out)const{
     }
     if(uppercase_player_goals.has_any_capture_goal())
         uppercase_player_goals.write_initial_capture_states(out, true);
-    if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n(init (uppercaseBrokeThrough F))\n";
-    if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n(init (lowercaseBrokeThrough F))\n";
+    //if(uppercase_player_goals.has_any_breakthrough_goal())
+    //    out<<"\n(init (uppercaseBrokeThrough F))\n";
+    //if(lowercase_player_goals.has_any_breakthrough_goal())
+    //    out<<"\n(init (lowercaseBrokeThrough F))\n";
 }
 
 void game::write_pieces_definition(std::ofstream& out)const{
@@ -157,53 +158,79 @@ void game::write_next_state_logic(std::ofstream& out)const{
     out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x ?y ?x2 ?y2)))\n";
     out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n";
     out<<"(<= (next (cell ?x ?y ?player ?piece))\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n\n";
-    if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal())
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?movingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(captureCounter ?piece ?prevn))\n";
-    if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal())
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(true (captureCounter ?piece ?n)))\n";
+    if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal()){
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(captureCounterStep ?piece ?prevn))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece2))\n\t(distinct ?piece ?piece2)\n\t(true (captureCounter ?piece ?n)))\n";
+    }
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n(<= (next (uppercaseBrokeThrough ?b))\n\t(true (uppercaseBrokeThrough ?b)))\n";
+        out<<"\n(<= (next uppercaseBrokeThrough)\n\t(true uppercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n(<= (next (lowercaseBrokeThrough ?b))\n\t(true (lowercaseBrokeThrough ?b)))\n";
+        out<<"\n(<= (next lowercaseBrokeThrough)\n\t(true lowercaseBrokeThrough))\n";
     uppercase_player_goals.write_breakthrough_detection(out, true);
     lowercase_player_goals.write_breakthrough_detection(out, false);
 }
 
 void game::write_terminal_state(std::ofstream& out)const{
-    out<<"(<= terminal\n\t(step "<<turns_limit+1<<"))\n\n";
+    out<<"(<= terminal\n\t(step "<<turns_limit+1<<"))\n";
+    if(lowercase_player_goals.has_any_capture_goal())
+        out<<"\n(<= (capturedEnoughToWin lowercasePlayer)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(uppercasePieceType ?piece))\n";
+    if(uppercase_player_goals.has_any_capture_goal())
+        out<<"(<= (capturedEnoughToWin uppercasePlayer)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(lowercasePieceType ?piece))\n";
     if(lowercase_player_goals.has_any_capture_goal() || uppercase_player_goals.has_any_capture_goal())
-        out<<"(<= terminal\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n)))\n";
-    out<<"\n(<= upperHasNoPieces\n\t(uppercasePieceType ?piece)\n\t(not (true (cell ?x ?y ?piece))))\n";
+        out<<"(<= terminal\n\t(capturedEnoughToWin ?player))\n";
+    out<<"\n(<= upperHasSomePiece\n\t(uppercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece))\n";
+    out<<"(<= upperHasNoPieces\n\t(uppercasePieceType ?piece)\n\t(not (true (cell ?x ?y ?piece))))\n";
     out<<"(<= terminal\n\tupperHasNoPieces)\n";
-    out<<"\n(<= lowerHasNoPieces\n\t(lowercasePieceType ?piece)\n\t(not (true (cell ?x ?y ?piece))))\n";
+    out<<"\n(<= lowerHasSomePiece\n\t(lowercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece))\n";
+    out<<"(<= lowerHasNoPieces\n\t(lowercasePieceType ?piece)\n\t(not (true (cell ?x ?y ?piece))))\n";
     out<<"(<= terminal\n\tlowerHasNoPieces)\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n(<= terminal\n\t(true (uppercaseBrokeThrough T)))\n";
+        out<<"\n(<= terminal\n\t(true uppercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n(<= terminal\n\t(true (lowercaseBrokeThrough T)))\n";
+        out<<"\n(<= terminal\n\t(true lowercaseBrokeThrough))\n";
 }
 
 void game::write_goals(std::ofstream& out)const{
     out<<"(<= (goal uppercasePlayer 100)\n\tlowerHasNoPieces)\n";
     out<<"(<= (goal lowercasePlayer 100)\n\tupperHasNoPieces)\n";
     out<<"(<= (goal uppercasePlayer 0)\n\tupperHasNoPieces)\n";
-    out<<"(<= (goal lowercasePlayer 0)\n\tlowerHasNoPieces)\n";
+    out<<"(<= (goal lowercasePlayer 0)\n\tlowerHasNoPieces)\n\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal uppercasePlayer 100)\n\t(true (upperBrokeThrough T)))\n";
+        out<<"(<= (goal uppercasePlayer 100)\n\t(true uppercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal lowercasePlayer 100)\n\t(true (lowerBrokeThrough T)))\n";
+        out<<"(<= (goal lowercasePlayer 100)\n\t(true lowercaseBrokeThrough))\n";
+    if(lowercase_player_goals.has_any_breakthrough_goal())
+        out<<"(<= (goal uppercasePlayer 0)\n\t(true lowercaseBrokeThrough))\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal uppercasePlayer 0)\n\t(true (lowerBrokeThrough T)))\n";
+        out<<"(<= (goal lowercasePlayer 0)\n\t(true uppercaseBrokeThrough))\n";
+    if(uppercase_player_goals.has_any_capture_goal())
+        out<<"(<= (goal uppercasePlayer 100)\n\t(capturedEnoughToWin uppercasePlayer))\n";
+    if(lowercase_player_goals.has_any_capture_goal())
+        out<<"(<= (goal lowercasePlayer 100)\n\t(capturedEnoughToWin lowercasePlayer))\n";
+    if(lowercase_player_goals.has_any_capture_goal())
+        out<<"(<= (goal uppercasePlayer 0)\n\t(capturedEnoughToWin lowercasePlayer))\n";
+    if(uppercase_player_goals.has_any_capture_goal())
+        out<<"(<= (goal lowercasePlayer 0)\n\t(capturedEnoughToWin uppercasePlayer))\n";
+    out<<"\n(<= (goal lowercasePlayer 50)\n\tlowerHasSomePieces\n\tupperHasSomePieces";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal lowercasePlayer 0)\n\t(true (upperBrokeThrough T)))\n";
-    if(uppercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal uppercase 100)\n\t(lowercasePieceType ?piece)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n)))\n";
+        out<<"\n\t(not (true (lowercaseBrokeThrough T)))";
+    if(uppercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not (true (uppercaseBrokeThrough T)))";
     if(lowercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal lowercase 100)\n\t(uppercasePieceType ?piece)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n)))\n";
-    if(lowercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal uppercase 0)\n\t(uppercasePieceType ?piece)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n)))\n";
+        out<<"\n\t(not (capturedEnoughToWin lowercasePlayer))";
     if(uppercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal lowercase 0)\n\t(lowercasePieceType ?piece)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n)))\n";
+        out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
+    out<<")\n";
+    out<<"\n(<= (goal uppercasePlayer 50)\n\tlowerHasSomePieces\n\tupperHasSomePieces";
+    if(lowercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not (true lowercaseBrokeThrough))";
+    if(uppercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not (true uppercaseBrokeThrough))";
+    if(lowercase_player_goals.has_any_capture_goal())
+        out<<"\n\t(not (capturedEnoughToWin lowercasePlayer))";
+    if(uppercase_player_goals.has_any_capture_goal())
+        out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
+    out<<")\n";
 }
 
 std::string separator = ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
