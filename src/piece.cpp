@@ -127,3 +127,32 @@ void piece::write_possible_input(std::ofstream& out)const{
     char lower_piece = tolower(symbol);
     out<<"(<= (input lowercasePlayer (move "<<lower_piece<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<lower_piece<<"Move ?x1 ?y1 ?x2 ?y2))\n";
 }
+
+uint piece::max_number_of_repetitions(void)const{
+    return move_pattern.max_number_of_repetitions();
+}
+
+void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
+    std::vector<std::pair<uint, const move*>> additional_moves;
+    std::vector<std::pair<uint, const bracketed_move*>> additional_bracketed_moves;
+    additional_moves.push_back(std::make_pair(0,&move_pattern));
+    const std::string legal_move_name = std::string("legal")+(uppercase ? symbol : char(tolower(symbol)))+"Move";
+    out<<"(<= (legal "<<(uppercase ? "uppercase" : "lowercase")<<"Player (move "<<(uppercase ? symbol : char(tolower(symbol)))<<" ?xin ?yin ?xout ?yout))";
+    out<<"\n\t(true (control "<<(uppercase ? "uppercase" : "lowercase")<<"Player))";
+    out<<"\n\t("<<legal_move_name<<"0 ?xin ?yin ?xout ?yout))\n\n";
+    std::pair<uint, const move*> move_to_write;
+    std::pair<uint, const bracketed_move*> bracketed_move_to_write;
+    uint next_free_id = 1;
+    while(!additional_moves.empty() || !additional_bracketed_moves.empty()){
+        while(!additional_moves.empty()){
+            move_to_write = additional_moves.back();
+            additional_moves.pop_back();
+            move_to_write.second->write_as_gdl(out,additional_moves,additional_bracketed_moves,legal_move_name,move_to_write.first,uppercase,next_free_id);
+        }
+        while(!additional_bracketed_moves.empty()){
+            bracketed_move_to_write = additional_bracketed_moves.back();
+            additional_bracketed_moves.pop_back();
+            bracketed_move_to_write.second->write_freestanding_predicate(out,additional_moves,legal_move_name,bracketed_move_to_write.first,uppercase,next_free_id);
+        }
+    }
+}

@@ -34,6 +34,7 @@ class game{
         void write_next_state_logic(std::ofstream& out)const;
         void write_terminal_state(std::ofstream& out)const;
         void write_goals(std::ofstream& out)const;
+        void write_moves_succ(std::ofstream& out)const;
     public:
         game(const game& src);
         game& operator=(const game& src);

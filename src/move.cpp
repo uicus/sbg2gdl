@@ -66,7 +66,7 @@ void single_move::write_as_gdl(
     else
         out<<"\n\t(equal ?"<<start_y_name<<" ?"<<end_y_name<<")";
     if(kind == empty)
-        out<<"\n\t(not (true (cell ?"<<end_x_name<<" ?"<<end_y_name<<" ?piece)))";
+        out<<"\n\t(empty ?"<<end_x_name<<" ?"<<end_y_name<<")";
     else{
         out<<"\n\t(true (cell ?"<<end_x_name<<" ?"<<end_y_name<<" ?piece))";
         if(uppercase_player != (kind == own))
@@ -196,17 +196,36 @@ moves_sum& moves_sum::set_number(uint number_of_repetitions){
     return *this;
 }
 
+uint moves_sum::max_number_of_repetitions(void)const{
+    uint current_max = 0;
+    for(const auto& el: m)
+        current_max = std::max(current_max, el.max_number_of_repetitions());
+    return current_max;
+}
+
 void moves_sum::write_as_gdl(
     std::ofstream& out,
-    std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+    std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
     const std::string& move_name,
+    uint current_id,
     bool uppercase_player,
-    const std::string& start_x_name,
-    const std::string& start_y_name,
-    const std::string& end_x_name,
-    const std::string& end_y_name,
     uint& next_free_id)const{
-
+    for(const auto& el: m){
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)";
+        el.write_as_gdl(
+            out,
+            additional_moves_to_write,
+            additional_bracketed_moves,
+            move_name,
+            uppercase_player,
+            "xin",
+            "yin",
+            "xout",
+            "yout",
+            next_free_id);
+        out<<")\n\n";
+    }
 }
 
 moves_concatenation::moves_concatenation(void):
@@ -303,9 +322,17 @@ moves_concatenation& moves_concatenation::set_number(uint number_of_repetitions)
     return *this;
 }
 
+uint moves_concatenation::max_number_of_repetitions(void)const{
+    uint current_max = 0;
+    for(const auto& el: m)
+        current_max = std::max(current_max, el.max_number_of_repetitions());
+    return current_max;
+}
+
 void moves_concatenation::write_as_gdl(
     std::ofstream& out,
-    std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+    std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
     const std::string& move_name,
     bool uppercase_player,
     const std::string& start_x_name,
@@ -313,7 +340,38 @@ void moves_concatenation::write_as_gdl(
     const std::string& end_x_name,
     const std::string& end_y_name,
     uint& next_free_id)const{
-
+    std::string current_start_x_name = start_x_name;
+    std::string current_start_y_name = start_y_name;
+    std::string current_end_x_name, current_end_y_name;
+    for(uint i=0;i<m.size()-1;++i){
+        current_end_x_name = start_x_name+std::to_string(i+1);
+        current_end_y_name = start_y_name+std::to_string(i+1);
+        m[i].write_as_gdl(
+            out,
+            additional_moves_to_write,
+            additional_bracketed_moves,
+            move_name,
+            uppercase_player,
+            current_start_x_name,
+            current_start_y_name,
+            current_end_x_name,
+            current_end_y_name,
+            next_free_id);
+        current_start_x_name = current_end_x_name;
+        current_start_y_name = current_end_y_name;
+    }
+    if(!m.empty()) // this if is theoretically unnecessary, but just to be sure...
+        m.back().write_as_gdl(
+            out,
+            additional_moves_to_write,
+            additional_bracketed_moves,
+            move_name,
+            uppercase_player,
+            current_start_x_name,
+            current_start_y_name,
+            end_x_name,
+            end_y_name,
+            next_free_id);
 }
 
 bracketed_move::bracketed_move(const single_move& src):
@@ -434,9 +492,14 @@ bracketed_move& bracketed_move::set_number(uint number){
     return *this;
 }
 
+uint bracketed_move::max_number_of_repetitions(void)const{
+    return std::max(number_of_repetitions, (sum ? m_sum->max_number_of_repetitions() : 0));
+}
+
 void bracketed_move::write_as_gdl(
     std::ofstream& out,
-    std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+    std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
     const std::string& move_name,
     bool uppercase_player,
     const std::string& start_x_name,
@@ -444,11 +507,90 @@ void bracketed_move::write_as_gdl(
     const std::string& end_x_name,
     const std::string& end_y_name,
     uint& next_free_id)const{
+    if(number_of_repetitions == 1) // if the move is repeated only once, creating another predicate is not worth the effort
+        write_one_repetition(
+            out,
+            additional_moves_to_write,
+            move_name,
+            uppercase_player,
+            start_x_name,
+            start_y_name,
+            end_x_name,
+            end_y_name,
+            next_free_id);
+    else{
+        out<<"\n\t("<<move_name<<next_free_id<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+        additional_bracketed_moves.push_back(std::make_pair(next_free_id++, this));
+    }
+}
+
+void bracketed_move::write_one_repetition(
+    std::ofstream& out,
+    std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    const std::string& move_name,
+    bool uppercase_player,
+    const std::string& start_x_name,
+    const std::string& start_y_name,
+    const std::string& end_x_name,
+    const std::string& end_y_name,
+    uint& next_free_id)const{
+    if(sum){
+        out<<"\n\t("<<move_name<<next_free_id<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+        additional_moves_to_write.push_back(std::make_pair(next_free_id++, m_sum));
+    }
+    else
+        single_m->write_as_gdl(
+            out,
+            uppercase_player,
+            start_x_name,
+            start_y_name,
+            end_x_name,
+            end_y_name);
+}
+
+void bracketed_move::write_freestanding_predicate(
+    std::ofstream& out,
+    std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    const std::string& move_name,
+    uint current_id,
+    bool uppercase_player,
+    uint& next_free_id)const{
+    if(number_of_repetitions > 0){
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number_of_repetitions<<"))\n";
+        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y 0)\n\t(file ?x)\n\t(rank ?y))\n";
+        out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
+        out<<"\n\t(movesSucc ?prevn ?n)";
+        write_one_repetition(
+            out,
+            additional_moves_to_write,
+            move_name,
+            uppercase_player,
+            "xin",
+            "yin",
+            "nextx",
+            "nexty",
+            next_free_id);
+        out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?prevn))\n\n";
+    }
+    else{ // star
+        out<<"(<= ("<<move_name<<current_id<<" ?x ?y ?x ?y)\n\t(file ?x)\n\t(rank ?y))\n";
+        out<<"(<= ("<<move_name<<current_id<<"?xin ?yin ?xout ?yout ?n)";
+        write_one_repetition(
+            out,
+            additional_moves_to_write,
+            move_name,
+            uppercase_player,
+            "xin",
+            "yin",
+            "nextx",
+            "nexty",
+            next_free_id);
+        out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout))\n\n";
+    }
 }
 
 std::string single_move::to_string(void)const{
     return std::to_string(x_delta)+','+std::to_string(y_delta)+','+(kind == empty ? 'e' : (kind == enemy ? 'p' : 'w'));
-
 }
 
 std::string moves_sum::to_string(void)const{

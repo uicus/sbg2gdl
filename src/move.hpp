@@ -64,15 +64,15 @@ class moves_sum{
         moves_sum& set_star(void);
         moves_sum& set_number(uint number_of_repetitions);
 
+        uint max_number_of_repetitions(void)const;
+
         void write_as_gdl(
             std::ofstream& out,
-            std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
             const std::string& move_name,
+            uint current_id,
             bool uppercase_player,
-            const std::string& start_x_name,
-            const std::string& start_y_name,
-            const std::string& end_x_name,
-            const std::string& end_y_name,
             uint& next_free_id)const;
 };
 
@@ -97,9 +97,12 @@ class moves_concatenation{
         moves_concatenation& set_star(void);
         moves_concatenation& set_number(uint number_of_repetitions);
 
+        uint max_number_of_repetitions(void)const;
+
         void write_as_gdl(
             std::ofstream& out,
-            std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
             const std::string& move_name,
             bool uppercase_player,
             const std::string& start_x_name,
@@ -134,15 +137,35 @@ class bracketed_move{
         bracketed_move& set_star(void);
         bracketed_move& set_number(uint number);
 
+        uint max_number_of_repetitions(void)const;
+
         void write_as_gdl(
             std::ofstream& out,
-            std::vector<std::pair<uint, move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
             const std::string& move_name,
             bool uppercase_player,
             const std::string& start_x_name,
             const std::string& start_y_name,
             const std::string& end_x_name,
             const std::string& end_y_name,
+            uint& next_free_id)const;
+        void write_one_repetition(
+            std::ofstream& out,
+            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            const std::string& move_name,
+            bool uppercase_player,
+            const std::string& start_x_name,
+            const std::string& start_y_name,
+            const std::string& end_x_name,
+            const std::string& end_y_name,
+            uint& next_free_id)const;
+        void write_freestanding_predicate(
+            std::ofstream& out,
+            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            const std::string& move_name,
+            uint current_id,
+            bool uppercase_player,
             uint& next_free_id)const;
 };
 

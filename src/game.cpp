@@ -100,7 +100,7 @@ void game::write_arithmetic(std::ofstream& out, uint less_than_number)const{
     out<<"(<= (sum ?x 0 ?x)\n\t(arithmeticSucc ?y ?x))\n";
     out<<"(<= (sum ?x ?y ?z)\n\t(arithmeticSucc ?x ?succx)\n\t(arithmeticSucc ?prevy ?y)\n\t(sum ?succx ?prevy ?z))\n";
     out<<"\n(<= (sub ?x ?y ?z)\n\t(sum ?z ?y ?x))\n";
-    out<<"\n(equal ?x ?x)\n";
+    out<<"\n(<= (equal ?x ?x)\n\t(sum ?x 0 ?x))\n"; // just to bound x
 }
 
 void game::write_base(std::ofstream& out)const{
@@ -148,19 +148,25 @@ void game::write_pieces_definition(std::ofstream& out)const{
     out<<'\n';
     for(const auto& el: piece_moves)
         out<<"(lowercasePieceType "<<char(tolower(el.get_symbol()))<<")\n";
+    out<<'\n';
+    out<<"(<= (legal ?player noop)\n\t(role ?player)\n\t(not (true (control ?player))))\n\n";
+    for(const auto& el: piece_moves){
+        el.write_as_gdl(out,true);
+        el.write_as_gdl(out,false);
+    }
 }
 
 void game::write_next_state_logic(std::ofstream& out)const{
     out<<"(<= (next (control uppercasePlayer))\n\t(true (control lowercasePlayer)))\n";
     out<<"(<= (next (control lowercasePlayer))\n\t(true (control uppercasePlayer)))\n\n";
     out<<"(<= (next (step ?n))\n\t(true (step ?prevn))\n\t(succ ?prevn ?n))\n\n";
-    out<<"(<= (next (cell ?x ?y ?player ?piece))\n\t(true (cell ?x ?y ?player ?piece))\n\t(not (affected ?x ?y)))\n";
+    out<<"(<= (next (cell ?x ?y ?piece))\n\t(true (cell ?x ?y ?piece))\n\t(not (affected ?x ?y)))\n";
     out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x ?y ?x2 ?y2)))\n";
     out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n";
-    out<<"(<= (next (cell ?x ?y ?player ?piece))\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n\n";
+    out<<"(<= (next (cell ?x ?y ?piece))\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n\n";
     if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal()){
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(captureCounterStep ?piece ?prevn))\n";
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece2))\n\t(distinct ?piece ?piece2)\n\t(true (captureCounter ?piece ?n)))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(true (captureCounter ?piece ?prevn)))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece2))\n\t(true (captureCounter ?piece ?n))\n\t(distinct ?piece ?piece2))\n";
     }
     if(uppercase_player_goals.has_any_breakthrough_goal())
         out<<"\n(<= (next uppercaseBrokeThrough)\n\t(true uppercaseBrokeThrough))\n";
@@ -171,18 +177,18 @@ void game::write_next_state_logic(std::ofstream& out)const{
 }
 
 void game::write_terminal_state(std::ofstream& out)const{
-    out<<"(<= terminal\n\t(step "<<turns_limit+1<<"))\n";
+    out<<"(<= terminal\n\t(true (step "<<turns_limit+1<<")))\n";
     if(lowercase_player_goals.has_any_capture_goal())
         out<<"\n(<= (capturedEnoughToWin lowercasePlayer)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(uppercasePieceType ?piece))\n";
     if(uppercase_player_goals.has_any_capture_goal())
         out<<"(<= (capturedEnoughToWin uppercasePlayer)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(lowercasePieceType ?piece))\n";
     if(lowercase_player_goals.has_any_capture_goal() || uppercase_player_goals.has_any_capture_goal())
         out<<"(<= terminal\n\t(capturedEnoughToWin ?player))\n";
-    out<<"\n(<= upperHasSomePiece\n\t(uppercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece))\n";
-    out<<"(<= upperHasNoPieces\n\t(uppercasePieceType ?piece)\n\t(not (true (cell ?x ?y ?piece))))\n";
+    out<<"\n(<= upperHasSomePiece\n\t(uppercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece)))\n";
+    out<<"(<= upperHasNoPieces\n\t(not upperHasSomePiece))\n";
     out<<"(<= terminal\n\tupperHasNoPieces)\n";
-    out<<"\n(<= lowerHasSomePiece\n\t(lowercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece))\n";
-    out<<"(<= lowerHasNoPieces\n\t(lowercasePieceType ?piece)\n\t(not (true (cell ?x ?y ?piece))))\n";
+    out<<"\n(<= lowerHasSomePiece\n\t(lowercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece)))\n";
+    out<<"(<= lowerHasNoPieces\n\t(not lowerHasSomePiece))\n";
     out<<"(<= terminal\n\tlowerHasNoPieces)\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
         out<<"\n(<= terminal\n\t(true uppercaseBrokeThrough))\n";
@@ -213,9 +219,9 @@ void game::write_goals(std::ofstream& out)const{
         out<<"(<= (goal lowercasePlayer 0)\n\t(capturedEnoughToWin uppercasePlayer))\n";
     out<<"\n(<= (goal lowercasePlayer 50)\n\tlowerHasSomePieces\n\tupperHasSomePieces";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n\t(not (true (lowercaseBrokeThrough T)))";
+        out<<"\n\t(not (true lowercaseBrokeThrough))";
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"\n\t(not (true (uppercaseBrokeThrough T)))";
+        out<<"\n\t(not (true uppercaseBrokeThrough))";
     if(lowercase_player_goals.has_any_capture_goal())
         out<<"\n\t(not (capturedEnoughToWin lowercasePlayer))";
     if(uppercase_player_goals.has_any_capture_goal())
@@ -231,6 +237,14 @@ void game::write_goals(std::ofstream& out)const{
     if(uppercase_player_goals.has_any_capture_goal())
         out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
     out<<")\n";
+}
+
+void game::write_moves_succ(std::ofstream& out)const{
+    uint current_max= 0;
+    for(const auto& el: piece_moves)
+        current_max = std::max(current_max, el.max_number_of_repetitions());
+    for(uint i=0;i<current_max;++i)
+        out<<"(movesSucc "<<i<<' '<<i+1<<")\n";
 }
 
 std::string separator = ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
@@ -267,6 +281,8 @@ void game::write_as_gdl(const std::string& output_file_name){
     brd.write_files_logic(out);
     out<<'\n';
     brd.write_ranks_logic(out);
+    out<<"(<= (occupied ?x ?y)\n\t(file ?x)\n\t(rank ?y)\n\t(true (cell ?x ?y ?piece)))\n";
+    out<<"(<= (empty ?x ?y)\n\t(file ?x)\n\t(rank ?y)\n\t(not (occupied ?x ?y)))\n";
     out<<'\n'<<separator;
     out<<";; Pieces definition\n";
     out<<separator<<'\n';
@@ -290,8 +306,16 @@ void game::write_as_gdl(const std::string& output_file_name){
         lowercase_player_goals.write_piece_capture_counter(out,false);
         out<<'\n';
         uppercase_player_goals.write_piece_capture_counter(out,true);
-        out<<"\n(<= (captureCounterStep ?piece ?n ?succn)\n\t(succ ?n ?succn)\n\t(captureCounterStep ?piece ?prevn ?n)\n\t(not (captureToWin ?piece ?n)))\n";
+        out<<"\n(<= (captureCounterStep ?piece ?n ?succn)";
+        out<<"\n\t(succ ?n ?succn)";
+        out<<"\n\t(succ ?prevn ?n)";
+        out<<"\n\t(captureCounterStep ?piece ?prevn ?n)";
+        out<<"\n\t(not (captureToWin ?piece ?n)))\n";
     }
+    out<<'\n'<<separator;
+    out<<";; Moves repetition counter\n";
+    out<<separator<<'\n';
+    write_moves_succ(out);
     out<<'\n'<<separator;
     out<<";; Steps counter\n";
     out<<separator<<'\n';

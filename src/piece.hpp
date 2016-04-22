@@ -35,6 +35,10 @@ class piece{
 
         char get_symbol(void)const;
         void write_possible_input(std::ofstream& out)const;
+
+        uint max_number_of_repetitions(void)const;
+
+        void write_as_gdl(std::ofstream& out, bool uppercase)const;
 };
 
 std::vector<piece> parse_pieces(
