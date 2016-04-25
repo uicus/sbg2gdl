@@ -574,7 +574,7 @@ void bracketed_move::write_freestanding_predicate(
     }
     else{ // star
         out<<"(<= ("<<move_name<<current_id<<" ?x ?y ?x ?y)\n\t(file ?x)\n\t(rank ?y))\n";
-        out<<"(<= ("<<move_name<<current_id<<"?xin ?yin ?xout ?yout ?n)";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)";
         write_one_repetition(
             out,
             additional_moves_to_write,
@@ -585,7 +585,7 @@ void bracketed_move::write_freestanding_predicate(
             "nextx",
             "nexty",
             next_free_id);
-        out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout))\n\n";
+        out<<"\n\t("<<move_name<<current_id<<" ?nextx ?nexty ?xout ?yout))\n\n";
     }
 }
 

@@ -89,7 +89,7 @@ game parse_game(const std::string& file_name, std::vector<warning>& warnings_lis
 }
 
 void game::write_steps_logic(std::ofstream& out)const{
-    for(uint i=1;i<=turns_limit;++i)
+    for(uint i=0;i<=turns_limit;++i)
         out<<"(succ "<<i<<' '<<i+1<<")\n";
 }
 
@@ -101,6 +101,8 @@ void game::write_arithmetic(std::ofstream& out, uint less_than_number)const{
     out<<"(<= (sum ?x ?y ?z)\n\t(arithmeticSucc ?x ?succx)\n\t(arithmeticSucc ?prevy ?y)\n\t(sum ?succx ?prevy ?z))\n";
     out<<"\n(<= (sub ?x ?y ?z)\n\t(sum ?z ?y ?x))\n";
     out<<"\n(<= (equal ?x ?x)\n\t(sum ?x 0 ?x))\n"; // just to bound x
+    out<<"\n(<= (distinctCells ?x1 ?y1 ?x2 ?y2)\n\t(file ?x1)\n\t(file ?x2)\n\t(rank ?y1)\n\t(rank ?y2)\n\t(distinct ?x1 ?x2))\n";
+    out<<"(<= (distinctCells ?x1 ?y1 ?x2 ?y2)\n\t(file ?x1)\n\t(file ?x2)\n\t(rank ?y1)\n\t(rank ?y2)\n\t(distinct ?y1 ?y2))\n";
 }
 
 void game::write_base(std::ofstream& out)const{
@@ -165,8 +167,9 @@ void game::write_next_state_logic(std::ofstream& out)const{
     out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n";
     out<<"(<= (next (cell ?x ?y ?piece))\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n\n";
     if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal()){
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(true (captureCounter ?piece ?prevn)))\n";
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece2))\n\t(true (captureCounter ?piece ?n))\n\t(distinct ?piece ?piece2))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(distinctCells ?x1 ?y1 ?x ?y)\n\t(true (captureCounter ?piece ?prevn)))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (captureCounter ?piece ?n))\n\t(not (true (cell ?x ?y ?piece))))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x1 ?y1))\n\t(true (captureCounter ?piece ?n)))\n";
     }
     if(uppercase_player_goals.has_any_breakthrough_goal())
         out<<"\n(<= (next uppercaseBrokeThrough)\n\t(true uppercaseBrokeThrough))\n";
@@ -190,6 +193,10 @@ void game::write_terminal_state(std::ofstream& out)const{
     out<<"\n(<= lowerHasSomePiece\n\t(lowercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece)))\n";
     out<<"(<= lowerHasNoPieces\n\t(not lowerHasSomePiece))\n";
     out<<"(<= terminal\n\tlowerHasNoPieces)\n";
+    out<<"\n(<= lowerHasLegalMove\n\t(legal lowercasePlayer ?move))\n";
+    out<<"(<= upperHasLegalMove\n\t(legal uppercasePlayer ?move))\n";
+    out<<"(<= terminal\n\t(not lowerHasLegalMove))\n";
+    out<<"(<= terminal\n\t(not upperHasLegalMove))\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
         out<<"\n(<= terminal\n\t(true uppercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
@@ -201,6 +208,10 @@ void game::write_goals(std::ofstream& out)const{
     out<<"(<= (goal lowercasePlayer 100)\n\tupperHasNoPieces)\n";
     out<<"(<= (goal uppercasePlayer 0)\n\tupperHasNoPieces)\n";
     out<<"(<= (goal lowercasePlayer 0)\n\tlowerHasNoPieces)\n\n";
+    out<<"(<= (goal uppercasePlayer 100)\n\t(not lowerHasLegalMove))\n";
+    out<<"(<= (goal lowercasePlayer 100)\n\t(not upperHasLegalMove))\n";
+    out<<"(<= (goal uppercasePlayer 0)\n\t(not upperHasLegalMove))\n";
+    out<<"(<= (goal lowercasePlayer 0)\n\t(not lowerHasLegalMove))\n\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
         out<<"(<= (goal uppercasePlayer 100)\n\t(true uppercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
@@ -217,7 +228,7 @@ void game::write_goals(std::ofstream& out)const{
         out<<"(<= (goal uppercasePlayer 0)\n\t(capturedEnoughToWin lowercasePlayer))\n";
     if(uppercase_player_goals.has_any_capture_goal())
         out<<"(<= (goal lowercasePlayer 0)\n\t(capturedEnoughToWin uppercasePlayer))\n";
-    out<<"\n(<= (goal lowercasePlayer 50)\n\tlowerHasSomePieces\n\tupperHasSomePieces";
+    out<<"\n(<= (goal lowercasePlayer 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
     if(lowercase_player_goals.has_any_breakthrough_goal())
         out<<"\n\t(not (true lowercaseBrokeThrough))";
     if(uppercase_player_goals.has_any_breakthrough_goal())
@@ -227,7 +238,7 @@ void game::write_goals(std::ofstream& out)const{
     if(uppercase_player_goals.has_any_capture_goal())
         out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
     out<<")\n";
-    out<<"\n(<= (goal uppercasePlayer 50)\n\tlowerHasSomePieces\n\tupperHasSomePieces";
+    out<<"\n(<= (goal uppercasePlayer 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
     if(lowercase_player_goals.has_any_breakthrough_goal())
         out<<"\n\t(not (true lowercaseBrokeThrough))";
     if(uppercase_player_goals.has_any_breakthrough_goal())

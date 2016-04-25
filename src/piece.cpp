@@ -139,6 +139,7 @@ void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
     const std::string legal_move_name = std::string("legal")+(uppercase ? symbol : char(tolower(symbol)))+"Move";
     out<<"(<= (legal "<<(uppercase ? "uppercase" : "lowercase")<<"Player (move "<<(uppercase ? symbol : char(tolower(symbol)))<<" ?xin ?yin ?xout ?yout))";
     out<<"\n\t(true (control "<<(uppercase ? "uppercase" : "lowercase")<<"Player))";
+    out<<"\n\t(true (cell ?xin ?yin "<<(uppercase ? symbol : char(tolower(symbol)))<<"))";
     out<<"\n\t("<<legal_move_name<<"0 ?xin ?yin ?xout ?yout))\n\n";
     std::pair<uint, const move*> move_to_write;
     std::pair<uint, const bracketed_move*> bracketed_move_to_write;
