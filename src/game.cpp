@@ -2,6 +2,7 @@
 
 #include"game.hpp"
 #include"parser.hpp"
+#include"gdl_constants.hpp"
 
 game::game(
 std::string&& src_name,
@@ -122,34 +123,29 @@ void game::write_base(std::ofstream& out)const{
 
 void game::write_input(std::ofstream& out)const{
     out<<"(<= (input ?player noop)\n\t(role ?player))\n";
-    out<<"(<= (input uppercasePlayer (move ?piece ?x1 ?y1 ?x2 ?y2))\n\t(uppercasePieceType ?piece)\n\t(file ?x1)\n\t(rank ?y1)\n\t(file ?x2)\n\t(rank ?y2))\n";
-    out<<"(<= (input lowercasePlayer (move ?piece ?x1 ?y1 ?x2 ?y2))\n\t(lowercasePieceType ?piece)\n\t(file ?x1)\n\t(rank ?y1)\n\t(file ?x2)\n\t(rank ?y2))\n";
+    out<<"(<= (input ?player (move ?x1 ?y1 ?x2 ?y2))\n\t(file ?x1)\n\t(rank ?y1)\n\t(file ?x2)\n\t(rank ?y2)\n\t(role ?player))\n";
 }
 
 void game::write_initial_state(std::ofstream& out)const{
     brd.write_initial_state(out);
     out<<"\n(init (step 1))\n";
-    out<<"\n(init (control uppercasePlayer))\n\n";
+    out<<"\n(init (control "<<player_name(true)<<"))\n\n";
     if(lowercase_player_goals.has_any_capture_goal()){
         lowercase_player_goals.write_initial_capture_states(out, false);
         out<<'\n';
     }
     if(uppercase_player_goals.has_any_capture_goal())
         uppercase_player_goals.write_initial_capture_states(out, true);
-    //if(uppercase_player_goals.has_any_breakthrough_goal())
-    //    out<<"\n(init (uppercaseBrokeThrough F))\n";
-    //if(lowercase_player_goals.has_any_breakthrough_goal())
-    //    out<<"\n(init (lowercaseBrokeThrough F))\n";
 }
 
 void game::write_pieces_definition(std::ofstream& out)const{
     out<<"(<= (pieceType ?piece)\n\t(uppercasePieceType ?piece))\n";
     out<<"(<= (pieceType ?piece)\n\t(lowercasePieceType ?piece))\n\n";
     for(const auto& el: piece_moves)
-        out<<"(uppercasePieceType "<<el.get_symbol()<<")\n";
+        out<<"(uppercasePieceType "<<piece_name(el.get_symbol(), true)<<")\n";
     out<<'\n';
     for(const auto& el: piece_moves)
-        out<<"(lowercasePieceType "<<char(tolower(el.get_symbol()))<<")\n";
+        out<<"(lowercasePieceType "<<piece_name(el.get_symbol(), false)<<")\n";
     out<<'\n';
     out<<"(<= (legal ?player noop)\n\t(role ?player)\n\t(not (true (control ?player))))\n\n";
     for(const auto& el: piece_moves){
@@ -159,17 +155,17 @@ void game::write_pieces_definition(std::ofstream& out)const{
 }
 
 void game::write_next_state_logic(std::ofstream& out)const{
-    out<<"(<= (next (control uppercasePlayer))\n\t(true (control lowercasePlayer)))\n";
-    out<<"(<= (next (control lowercasePlayer))\n\t(true (control uppercasePlayer)))\n\n";
+    out<<"(<= (next (control "<<player_name(true)<<"))\n\t(true (control "<<player_name(false)<<")))\n";
+    out<<"(<= (next (control "<<player_name(false)<<"))\n\t(true (control "<<player_name(true)<<")))\n\n";
     out<<"(<= (next (step ?n))\n\t(true (step ?prevn))\n\t(succ ?prevn ?n))\n\n";
     out<<"(<= (next (cell ?x ?y ?piece))\n\t(true (cell ?x ?y ?piece))\n\t(not (affected ?x ?y)))\n";
-    out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x ?y ?x2 ?y2)))\n";
-    out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n";
-    out<<"(<= (next (cell ?x ?y ?piece))\n\t(does ?player (move ?piece ?x1 ?y1 ?x ?y)))\n\n";
+    out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?x ?y ?x2 ?y2)))\n";
+    out<<"(<= (affected ?x ?y)\n\t(does ?player (move ?x1 ?y1 ?x ?y)))\n";
+    out<<"(<= (next (cell ?x ?y ?piece))\n\t(does ?player (move ?x1 ?y1 ?x ?y))\n\t(true (cell ?x1 ?y1 ?piece)))\n\n";
     if(uppercase_player_goals.has_any_capture_goal() || lowercase_player_goals.has_any_capture_goal()){
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(distinctCells ?x1 ?y1 ?x ?y)\n\t(true (captureCounter ?piece ?prevn)))\n";
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x ?y))\n\t(true (captureCounter ?piece ?n))\n\t(not (true (cell ?x ?y ?piece))))\n";
-        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?capturingPiece ?x1 ?y1 ?x1 ?y1))\n\t(true (captureCounter ?piece ?n)))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?x1 ?y1 ?x ?y))\n\t(true (cell ?x ?y ?piece))\n\t(succ ?prevn ?n)\n\t(distinctCells ?x1 ?y1 ?x ?y)\n\t(true (captureCounter ?piece ?prevn)))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?x1 ?y1 ?x ?y))\n\t(true (captureCounter ?piece ?n))\n\t(not (true (cell ?x ?y ?piece))))\n";
+        out<<"(<= (next (captureCounter ?piece ?n))\n\t(does ?player (move ?x1 ?y1 ?x1 ?y1))\n\t(true (captureCounter ?piece ?n)))\n";
     }
     if(uppercase_player_goals.has_any_breakthrough_goal())
         out<<"\n(<= (next uppercaseBrokeThrough)\n\t(true uppercaseBrokeThrough))\n";
@@ -182,9 +178,9 @@ void game::write_next_state_logic(std::ofstream& out)const{
 void game::write_terminal_state(std::ofstream& out)const{
     out<<"(<= terminal\n\t(true (step "<<turns_limit+1<<")))\n";
     if(lowercase_player_goals.has_any_capture_goal())
-        out<<"\n(<= (capturedEnoughToWin lowercasePlayer)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(uppercasePieceType ?piece))\n";
+        out<<"\n(<= (capturedEnoughToWin "<<player_name(false)<<")\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(uppercasePieceType ?piece))\n";
     if(uppercase_player_goals.has_any_capture_goal())
-        out<<"(<= (capturedEnoughToWin uppercasePlayer)\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(lowercasePieceType ?piece))\n";
+        out<<"(<= (capturedEnoughToWin "<<player_name(true)<<")\n\t(captureToWin ?piece ?n)\n\t(true (captureCounter ?piece ?n))\n\t(lowercasePieceType ?piece))\n";
     if(lowercase_player_goals.has_any_capture_goal() || uppercase_player_goals.has_any_capture_goal())
         out<<"(<= terminal\n\t(capturedEnoughToWin ?player))\n";
     out<<"\n(<= upperHasSomePiece\n\t(uppercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece)))\n";
@@ -193,8 +189,8 @@ void game::write_terminal_state(std::ofstream& out)const{
     out<<"\n(<= lowerHasSomePiece\n\t(lowercasePieceType ?piece)\n\t(true (cell ?x ?y ?piece)))\n";
     out<<"(<= lowerHasNoPieces\n\t(not lowerHasSomePiece))\n";
     out<<"(<= terminal\n\tlowerHasNoPieces)\n";
-    out<<"\n(<= lowerHasLegalMove\n\t(legal lowercasePlayer ?move))\n";
-    out<<"(<= upperHasLegalMove\n\t(legal uppercasePlayer ?move))\n";
+    out<<"\n(<= lowerHasLegalMove\n\t(legal "<<player_name(false)<<" ?move))\n";
+    out<<"(<= upperHasLegalMove\n\t(legal "<<player_name(true)<<" ?move))\n";
     out<<"(<= terminal\n\t(not lowerHasLegalMove))\n";
     out<<"(<= terminal\n\t(not upperHasLegalMove))\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
@@ -204,31 +200,31 @@ void game::write_terminal_state(std::ofstream& out)const{
 }
 
 void game::write_goals(std::ofstream& out)const{
-    out<<"(<= (goal uppercasePlayer 100)\n\tlowerHasNoPieces)\n";
-    out<<"(<= (goal lowercasePlayer 100)\n\tupperHasNoPieces)\n";
-    out<<"(<= (goal uppercasePlayer 0)\n\tupperHasNoPieces)\n";
-    out<<"(<= (goal lowercasePlayer 0)\n\tlowerHasNoPieces)\n\n";
-    out<<"(<= (goal uppercasePlayer 100)\n\t(not lowerHasLegalMove))\n";
-    out<<"(<= (goal lowercasePlayer 100)\n\t(not upperHasLegalMove))\n";
-    out<<"(<= (goal uppercasePlayer 0)\n\t(not upperHasLegalMove))\n";
-    out<<"(<= (goal lowercasePlayer 0)\n\t(not lowerHasLegalMove))\n\n";
+    out<<"(<= (goal "<<player_name(true)<<" 100)\n\tlowerHasNoPieces)\n";
+    out<<"(<= (goal "<<player_name(false)<<" 100)\n\tupperHasNoPieces)\n";
+    out<<"(<= (goal "<<player_name(true)<<" 0)\n\tupperHasNoPieces)\n";
+    out<<"(<= (goal "<<player_name(false)<<" 0)\n\tlowerHasNoPieces)\n\n";
+    out<<"(<= (goal "<<player_name(true)<<" 100)\n\t(not lowerHasLegalMove))\n";
+    out<<"(<= (goal "<<player_name(false)<<" 100)\n\t(not upperHasLegalMove))\n";
+    out<<"(<= (goal "<<player_name(true)<<" 0)\n\t(not upperHasLegalMove))\n";
+    out<<"(<= (goal "<<player_name(false)<<" 0)\n\t(not lowerHasLegalMove))\n\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal uppercasePlayer 100)\n\t(true uppercaseBrokeThrough))\n";
+        out<<"(<= (goal "<<player_name(true)<<" 100)\n\t(true uppercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal lowercasePlayer 100)\n\t(true lowercaseBrokeThrough))\n";
+        out<<"(<= (goal "<<player_name(false)<<" 100)\n\t(true lowercaseBrokeThrough))\n";
     if(lowercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal uppercasePlayer 0)\n\t(true lowercaseBrokeThrough))\n";
+        out<<"(<= (goal "<<player_name(true)<<" 0)\n\t(true lowercaseBrokeThrough))\n";
     if(uppercase_player_goals.has_any_breakthrough_goal())
-        out<<"(<= (goal lowercasePlayer 0)\n\t(true uppercaseBrokeThrough))\n";
+        out<<"(<= (goal "<<player_name(false)<<" 0)\n\t(true uppercaseBrokeThrough))\n";
     if(uppercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal uppercasePlayer 100)\n\t(capturedEnoughToWin uppercasePlayer))\n";
+        out<<"(<= (goal "<<player_name(true)<<" 100)\n\t(capturedEnoughToWin "<<player_name(true)<<"))\n";
     if(lowercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal lowercasePlayer 100)\n\t(capturedEnoughToWin lowercasePlayer))\n";
+        out<<"(<= (goal "<<player_name(false)<<" 100)\n\t(capturedEnoughToWin "<<player_name(false)<<"))\n";
     if(lowercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal uppercasePlayer 0)\n\t(capturedEnoughToWin lowercasePlayer))\n";
+        out<<"(<= (goal "<<player_name(true)<<" 0)\n\t(capturedEnoughToWin "<<player_name(false)<<"))\n";
     if(uppercase_player_goals.has_any_capture_goal())
-        out<<"(<= (goal lowercasePlayer 0)\n\t(capturedEnoughToWin uppercasePlayer))\n";
-    out<<"\n(<= (goal lowercasePlayer 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
+        out<<"(<= (goal "<<player_name(false)<<" 0)\n\t(capturedEnoughToWin "<<player_name(true)<<"))\n";
+    out<<"\n(<= (goal "<<player_name(false)<<" 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
     if(lowercase_player_goals.has_any_breakthrough_goal())
         out<<"\n\t(not (true lowercaseBrokeThrough))";
     if(uppercase_player_goals.has_any_breakthrough_goal())
@@ -238,7 +234,7 @@ void game::write_goals(std::ofstream& out)const{
     if(uppercase_player_goals.has_any_capture_goal())
         out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
     out<<")\n";
-    out<<"\n(<= (goal uppercasePlayer 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
+    out<<"\n(<= (goal "<<player_name(true)<<" 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
     if(lowercase_player_goals.has_any_breakthrough_goal())
         out<<"\n\t(not (true lowercaseBrokeThrough))";
     if(uppercase_player_goals.has_any_breakthrough_goal())
@@ -253,12 +249,13 @@ void game::write_goals(std::ofstream& out)const{
 void game::write_moves_succ(std::ofstream& out)const{
     uint current_max= 0;
     for(const auto& el: piece_moves)
-        current_max = std::max(current_max, el.max_number_of_repetitions());
-    for(uint i=0;i<current_max;++i)
-        out<<"(movesSucc "<<i<<' '<<i+1<<")\n";
+        current_max = std::max(current_max, el.max_number_of_repetitions(brd.get_width()*brd.get_height()));
+    if(current_max > 1)
+        for(uint i=0;i<current_max;++i)
+            out<<"(movesSucc "<<i<<' '<<i+1<<")\n";
+    else
+        out<<"; all moves don't use repetition pattern\n";
 }
-
-std::string separator = ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
 
 void game::write_as_gdl(const std::string& output_file_name){
     std::ofstream out(output_file_name);
@@ -268,8 +265,8 @@ void game::write_as_gdl(const std::string& output_file_name){
     out<<separator;
     out<<";; Roles\n";
     out<<separator<<'\n';
-    out<<"(role uppercasePlayer)\n";
-    out<<"(role lowercasePlayer)\n";
+    out<<"(role "<<player_name(true)<<")\n";
+    out<<"(role "<<player_name(false)<<")\n";
     out<<'\n'<<separator;
     out<<";; Base\n";
     out<<separator<<'\n';

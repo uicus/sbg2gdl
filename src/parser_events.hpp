@@ -14,8 +14,8 @@ class parse_error : public std::exception{
         std::string description;
     public:
         //parse_error(void);
-        parse_error(const char* source);
-        parse_error(uint line, uint character, const char* description);
+        parse_error(const std::string& source);
+        parse_error(uint line, uint character, const std::string& description);
         parse_error(const parse_error& source);
         parse_error& operator=(const parse_error& source);
         parse_error(parse_error&& source);
@@ -30,7 +30,7 @@ class warning{
         uint char_number;
         std::string description;
     public:
-        warning(uint line, uint column, const char* src);
+        warning(uint line, uint column, const std::string& src);
         warning(const warning& src);
         warning& operator=(const warning& src);
         warning(warning&& src);

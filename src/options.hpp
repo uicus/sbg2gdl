@@ -10,7 +10,7 @@ class wrong_argument_error : public std::exception{
         std::string description;
     public:
         wrong_argument_error(void);
-        wrong_argument_error(const char* description);
+        wrong_argument_error(const std::string& description);
         wrong_argument_error(const wrong_argument_error& source);
         wrong_argument_error& operator=(const wrong_argument_error& source);
         wrong_argument_error(wrong_argument_error&& source);

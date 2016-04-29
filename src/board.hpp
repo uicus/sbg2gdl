@@ -12,7 +12,7 @@
 class board_parse_error : public parse_error{
     public:
         board_parse_error(void);
-        board_parse_error(uint line, uint character, const char* description);
+        board_parse_error(uint line, uint character, const std::string& description);
         board_parse_error(const board_parse_error& source);
         board_parse_error& operator=(const board_parse_error& source);
         board_parse_error(board_parse_error&& source);

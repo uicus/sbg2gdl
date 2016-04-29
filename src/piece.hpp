@@ -12,7 +12,7 @@
 class piece_parse_error : public parse_error{
     public:
         piece_parse_error(void);
-        piece_parse_error(uint line, uint character, const char* description);
+        piece_parse_error(uint line, uint character, const std::string& description);
         piece_parse_error(const piece_parse_error& source);
         piece_parse_error& operator=(const piece_parse_error& source);
         piece_parse_error(piece_parse_error&& source);
@@ -34,9 +34,8 @@ class piece{
         ~piece(void);
 
         char get_symbol(void)const;
-        void write_possible_input(std::ofstream& out)const;
 
-        uint max_number_of_repetitions(void)const;
+        uint max_number_of_repetitions(uint treat_star_as)const;
 
         void write_as_gdl(std::ofstream& out, bool uppercase)const;
 };

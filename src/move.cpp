@@ -196,10 +196,10 @@ moves_sum& moves_sum::set_number(uint number_of_repetitions){
     return *this;
 }
 
-uint moves_sum::max_number_of_repetitions(void)const{
+uint moves_sum::max_number_of_repetitions(uint treat_star_as)const{
     uint current_max = 0;
     for(const auto& el: m)
-        current_max = std::max(current_max, el.max_number_of_repetitions());
+        current_max = std::max(current_max, el.max_number_of_repetitions(treat_star_as));
     return current_max;
 }
 
@@ -322,10 +322,10 @@ moves_concatenation& moves_concatenation::set_number(uint number_of_repetitions)
     return *this;
 }
 
-uint moves_concatenation::max_number_of_repetitions(void)const{
+uint moves_concatenation::max_number_of_repetitions(uint treat_star_as)const{
     uint current_max = 0;
     for(const auto& el: m)
-        current_max = std::max(current_max, el.max_number_of_repetitions());
+        current_max = std::max(current_max, el.max_number_of_repetitions(treat_star_as));
     return current_max;
 }
 
@@ -343,7 +343,7 @@ void moves_concatenation::write_as_gdl(
     std::string current_start_x_name = start_x_name;
     std::string current_start_y_name = start_y_name;
     std::string current_end_x_name, current_end_y_name;
-    for(uint i=0;i<m.size()-1;++i){
+    for(uint i=0;i+1<m.size();++i){
         current_end_x_name = start_x_name+std::to_string(i+1);
         current_end_y_name = start_y_name+std::to_string(i+1);
         m[i].write_as_gdl(
@@ -492,8 +492,8 @@ bracketed_move& bracketed_move::set_number(uint number){
     return *this;
 }
 
-uint bracketed_move::max_number_of_repetitions(void)const{
-    return std::max(number_of_repetitions, (sum ? m_sum->max_number_of_repetitions() : 0));
+uint bracketed_move::max_number_of_repetitions(uint treat_star_as)const{
+    return std::max(number_of_repetitions == 0 ? treat_star_as : number_of_repetitions, (sum ? m_sum->max_number_of_repetitions(treat_star_as) : 0));
 }
 
 void bracketed_move::write_as_gdl(
@@ -573,8 +573,10 @@ void bracketed_move::write_freestanding_predicate(
         out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?prevn))\n\n";
     }
     else{ // star
-        out<<"(<= ("<<move_name<<current_id<<" ?x ?y ?x ?y)\n\t(file ?x)\n\t(rank ?y))\n";
-        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout 0))\n";
+        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y ?n)\n\t(file ?x)\n\t(rank ?y)\n\t(movesSucc ?n ?succn))\n";
+        out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
+        out<<"\n\t(movesSucc ?n ?succn)";
         write_one_repetition(
             out,
             additional_moves_to_write,
@@ -585,7 +587,7 @@ void bracketed_move::write_freestanding_predicate(
             "nextx",
             "nexty",
             next_free_id);
-        out<<"\n\t("<<move_name<<current_id<<" ?nextx ?nexty ?xout ?yout))\n\n";
+        out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?succn))\n\n";
     }
 }
 

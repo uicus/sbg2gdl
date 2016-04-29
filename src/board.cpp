@@ -1,10 +1,11 @@
 #include"board.hpp"
+#include"gdl_constants.hpp"
 
 board_parse_error::board_parse_error(void):
 parse_error("Board parse error"){
 }
 
-board_parse_error::board_parse_error(uint line, uint character, const char* source):
+board_parse_error::board_parse_error(uint line, uint character, const std::string& source):
 parse_error(line, character, source){
 }
 
@@ -153,7 +154,7 @@ void board::write_initial_state(std::ofstream& out)const{
     for(uint i=0;i<fields.size();++i)
         for(uint j=0;j<width;++j)
             if(fields[i][j].second != '.')
-                out<<"(init (cell "<<j<<' '<<i<<' '<<(fields[i][j].first ? fields[i][j].second : char(tolower(fields[i][j].second)))<<"))\n";
+                out<<"(init (cell "<<j<<' '<<i<<' '<<piece_name(fields[i][j].second, fields[i][j].first)<<"))\n";
 }
 
 void board::write_ranks_logic(std::ofstream& out)const{

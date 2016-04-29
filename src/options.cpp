@@ -7,7 +7,7 @@ std::exception(),
 description("Wrong argument error"){
 }
 
-wrong_argument_error::wrong_argument_error(const char* source):
+wrong_argument_error::wrong_argument_error(const std::string& source):
 std::exception(),
 description(source){
 }

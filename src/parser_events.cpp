@@ -5,14 +5,14 @@ std::exception(),
 description("Unspecified parser error"){
 }*/
 
-parse_error::parse_error(const char* source):
+parse_error::parse_error(const std::string& source):
 std::exception(),
 line_number(0),
 char_number(0),
 description(source){
 }
 
-parse_error::parse_error(uint line, uint character, const char* source):
+parse_error::parse_error(uint line, uint character, const std::string& source):
 std::exception(),
 line_number(line),
 char_number(character),
@@ -58,7 +58,7 @@ const char* parse_error::what(void)const noexcept{
     return ("General parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description).c_str();
 }
 
-warning::warning(uint line, uint column, const char* src):
+warning::warning(uint line, uint column, const std::string& src):
 line_number(line),
 char_number(column),
 description(src){

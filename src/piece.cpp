@@ -1,10 +1,11 @@
 #include"piece.hpp"
+#include"gdl_constants.hpp"
 
 piece_parse_error::piece_parse_error(void):
 parse_error("Piece parse error"){
 }
 
-piece_parse_error::piece_parse_error(uint line, uint character, const char* source):
+piece_parse_error::piece_parse_error(uint line, uint character, const std::string& source):
 parse_error(line, character, source){
 }
 
@@ -122,24 +123,18 @@ std::vector<piece> parse_pieces(
     return result;
 }
 
-void piece::write_possible_input(std::ofstream& out)const{
-    out<<"(<= (input uppercasePlayer (move "<<symbol<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<symbol<<"Move ?x1 ?y1 ?x2 ?y2))\n";
-    char lower_piece = tolower(symbol);
-    out<<"(<= (input lowercasePlayer (move "<<lower_piece<<" ?x1 ?y1 ?x2 ?y2))\n\t("<<lower_piece<<"Move ?x1 ?y1 ?x2 ?y2))\n";
-}
-
-uint piece::max_number_of_repetitions(void)const{
-    return move_pattern.max_number_of_repetitions();
+uint piece::max_number_of_repetitions(uint treat_star_as)const{
+    return move_pattern.max_number_of_repetitions(treat_star_as);
 }
 
 void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
     std::vector<std::pair<uint, const move*>> additional_moves;
     std::vector<std::pair<uint, const bracketed_move*>> additional_bracketed_moves;
     additional_moves.push_back(std::make_pair(0,&move_pattern));
-    const std::string legal_move_name = std::string("legal")+(uppercase ? symbol : char(tolower(symbol)))+"Move";
-    out<<"(<= (legal "<<(uppercase ? "uppercase" : "lowercase")<<"Player (move "<<(uppercase ? symbol : char(tolower(symbol)))<<" ?xin ?yin ?xout ?yout))";
-    out<<"\n\t(true (control "<<(uppercase ? "uppercase" : "lowercase")<<"Player))";
-    out<<"\n\t(true (cell ?xin ?yin "<<(uppercase ? symbol : char(tolower(symbol)))<<"))";
+    const std::string legal_move_name = std::string("legal")+piece_name(symbol, uppercase)+"Move";
+    out<<"(<= (legal "<<player_name(uppercase)<<" (move ?xin ?yin ?xout ?yout))";
+    out<<"\n\t(true (control "<<player_name(uppercase)<<"))";
+    out<<"\n\t(true (cell ?xin ?yin "<<piece_name(symbol, uppercase)<<"))";
     out<<"\n\t("<<legal_move_name<<"0 ?xin ?yin ?xout ?yout))\n\n";
     std::pair<uint, const move*> move_to_write;
     std::pair<uint, const bracketed_move*> bracketed_move_to_write;

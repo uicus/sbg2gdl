@@ -1,10 +1,11 @@
 #include"goals.hpp"
+#include"gdl_constants.hpp"
 
 goals_parse_error::goals_parse_error(void):
 parse_error("Goals parse error"){
 }
 
-goals_parse_error::goals_parse_error(uint line, uint character, const char* source):
+goals_parse_error::goals_parse_error(uint line, uint character, const std::string& source):
 parse_error(line, character, source){
 }
 
@@ -199,15 +200,15 @@ bool goals::has_any_capture_goal(void)const{
 
 void goals::write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces)const{
     for(const auto& el: piece_capture)
-        out<<"(captureCounterStep "<<(capturing_lower_pieces ? char(tolower(el.first)) : el.first)<<" 0 1)\n";
+        out<<"(captureCounterStep "<<piece_name(el.first, !capturing_lower_pieces)<<" 0 1)\n";
     out<<'\n';
     for(const auto& el: piece_capture)
-        out<<"(captureToWin "<<(capturing_lower_pieces ? char(tolower(el.first)) : el.first)<<' '<<el.second<<")\n";
+        out<<"(captureToWin "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<el.second<<")\n";
 }
 
 void goals::write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces)const{
     for(const auto& el: piece_capture)
-        out<<"(init (captureCounter "<<(capturing_lower_pieces ? char(tolower(el.first)) : el.first)<<" 0))\n";
+        out<<"(init (captureCounter "<<piece_name(el.first, !capturing_lower_pieces)<<" 0))\n";
 }
 
 bool goals::has_any_breakthrough_goal(void)const{
@@ -220,7 +221,7 @@ void goals::write_breakthrough_detection(std::ofstream& out, bool uppercase)cons
         std::string correct_case = (uppercase ? "uppercase" : "lowercase");
         for(const auto& coords: el.second){
             out<<"(<= (next "<<correct_case<<"BrokeThrough)";
-            out<<"\n\t(does "<<correct_case<<"Player (move "<<(uppercase ? el.first : char(tolower(el.first)))<<" ?x ?y "<<coords.first<<' '<<coords.second<<")))\n";
+            out<<"\n\t(does "<<player_name(uppercase)<<" (move ?x ?y "<<coords.first<<' '<<coords.second<<"))\n\t(true (cell ?x ?y "<<piece_name(el.first, uppercase)<<")))\n";
         }
     }
 }

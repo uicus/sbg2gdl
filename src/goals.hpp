@@ -13,7 +13,7 @@
 class goals_parse_error : public parse_error{
     public:
         goals_parse_error(void);
-        goals_parse_error(uint line, uint character, const char* description);
+        goals_parse_error(uint line, uint character, const std::string& description);
         goals_parse_error(const goals_parse_error& source);
         goals_parse_error& operator=(const goals_parse_error& source);
         goals_parse_error(goals_parse_error&& source);

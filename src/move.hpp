@@ -64,7 +64,7 @@ class moves_sum{
         moves_sum& set_star(void);
         moves_sum& set_number(uint number_of_repetitions);
 
-        uint max_number_of_repetitions(void)const;
+        uint max_number_of_repetitions(uint treat_star_as)const;
 
         void write_as_gdl(
             std::ofstream& out,
@@ -97,7 +97,7 @@ class moves_concatenation{
         moves_concatenation& set_star(void);
         moves_concatenation& set_number(uint number_of_repetitions);
 
-        uint max_number_of_repetitions(void)const;
+        uint max_number_of_repetitions(uint treat_star_as)const;
 
         void write_as_gdl(
             std::ofstream& out,
@@ -137,7 +137,7 @@ class bracketed_move{
         bracketed_move& set_star(void);
         bracketed_move& set_number(uint number);
 
-        uint max_number_of_repetitions(void)const;
+        uint max_number_of_repetitions(uint treat_star_as)const;
 
         void write_as_gdl(
             std::ofstream& out,
