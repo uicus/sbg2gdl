@@ -198,17 +198,17 @@ bool goals::has_any_capture_goal(void)const{
     return piece_capture.size() > 0;
 }
 
-void goals::write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces)const{
+void goals::write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces, uint capture_limit)const{
     for(const auto& el: piece_capture)
-        out<<"(captureCounterStep "<<piece_name(el.first, !capturing_lower_pieces)<<" 0 1)\n";
+        out<<"(captureCounterStep "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<number(0, capture_limit)<<' '<<number(1, capture_limit)<<")\n";
     out<<'\n';
     for(const auto& el: piece_capture)
-        out<<"(captureToWin "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<el.second<<")\n";
+        out<<"(captureToWin "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<number(el.second, capture_limit)<<")\n";
 }
 
-void goals::write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces)const{
+void goals::write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces, uint capture_limit)const{
     for(const auto& el: piece_capture)
-        out<<"(init (captureCounter "<<piece_name(el.first, !capturing_lower_pieces)<<" 0))\n";
+        out<<"(init (captureCounter "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<number(0, capture_limit)<<"))\n";
 }
 
 bool goals::has_any_breakthrough_goal(void)const{

@@ -166,7 +166,8 @@ class bracketed_move{
             const std::string& move_name,
             uint current_id,
             bool uppercase_player,
-            uint& next_free_id)const;
+            uint& next_free_id,
+            uint repetitions_base)const;
 };
 
 #endif

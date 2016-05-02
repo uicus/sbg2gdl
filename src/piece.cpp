@@ -127,7 +127,7 @@ uint piece::max_number_of_repetitions(uint treat_star_as)const{
     return move_pattern.max_number_of_repetitions(treat_star_as);
 }
 
-void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
+void piece::write_as_gdl(std::ofstream& out, bool uppercase, uint repetitions_base)const{
     std::vector<std::pair<uint, const move*>> additional_moves;
     std::vector<std::pair<uint, const bracketed_move*>> additional_bracketed_moves;
     additional_moves.push_back(std::make_pair(0,&move_pattern));
@@ -148,7 +148,7 @@ void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
         while(!additional_bracketed_moves.empty()){
             bracketed_move_to_write = additional_bracketed_moves.back();
             additional_bracketed_moves.pop_back();
-            bracketed_move_to_write.second->write_freestanding_predicate(out,additional_moves,legal_move_name,bracketed_move_to_write.first,uppercase,next_free_id);
+            bracketed_move_to_write.second->write_freestanding_predicate(out,additional_moves,legal_move_name,bracketed_move_to_write.first,uppercase,next_free_id, repetitions_base);
         }
     }
 }

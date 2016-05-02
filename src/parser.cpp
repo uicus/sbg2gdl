@@ -74,16 +74,18 @@ char parser::pointed_char(void)const{
 }
 
 bool parser::end_of_buffer(void)const{
-    return line_starts.empty() || number_of_chars_in_line + line_starts.top() >= buffer.length();
+    return line_starts.empty() || number_of_chars_in_line + line_starts.top() >= buffer.size();
 }
 
 bool parser::end_of_line(void)const{
-    return  pointed_char() == '\r' || pointed_char() == '\n' || end_of_buffer();
+    return pointed_char() == '\n' || end_of_buffer();
 }
 
 bool parser::whitespace(void)const{
-    return pointed_char() == ' ' || pointed_char() == '\t' || end_of_line();
+    return isspace(pointed_char());//pointed_char() == '\r' || pointed_char() == ' ' || pointed_char() == '\t' || end_of_line();
 }
+
+#include<iostream>
 
 char parser::get_next_char(void){
     char result;
@@ -93,10 +95,10 @@ char parser::get_next_char(void){
         result = pointed_char();
         line_starts.push(line_starts.top() + number_of_chars_in_line + 1);
         number_of_chars_in_line = 0;
-        if(end_of_buffer()){
+        if(end_of_buffer() && !input->eof()){
             std::string temp;
             std::getline(*input, temp);
-            if(!input->eof())buffer += temp + '\n';
+            buffer += temp + '\n';
         }
     }
     else{

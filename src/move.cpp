@@ -1,4 +1,5 @@
 #include"move.hpp"
+#include"gdl_constants.hpp"
 
 single_move::single_move(void):
 x_delta(0),
@@ -554,10 +555,11 @@ void bracketed_move::write_freestanding_predicate(
     const std::string& move_name,
     uint current_id,
     bool uppercase_player,
-    uint& next_free_id)const{
+    uint& next_free_id,
+    uint repetitions_base)const{
     if(number_of_repetitions > 0){
-        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number_of_repetitions<<"))\n";
-        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y 0)\n\t(file ?x)\n\t(rank ?y))\n";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number(number_of_repetitions, repetitions_base)<<"))\n";
+        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y "<<number(0, repetitions_base)<<")\n\t(file ?x)\n\t(rank ?y))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
         out<<"\n\t(movesSucc ?prevn ?n)";
         write_one_repetition(
@@ -573,7 +575,7 @@ void bracketed_move::write_freestanding_predicate(
         out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?prevn))\n\n";
     }
     else{ // star
-        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout 0))\n";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number(0, repetitions_base)<<"))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y ?n)\n\t(file ?x)\n\t(rank ?y)\n\t(movesSucc ?n ?succn))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
         out<<"\n\t(movesSucc ?n ?succn)";
