@@ -33,6 +33,8 @@ class single_move{
 
         std::string to_string(void)const;
 
+        bool operator==(const single_move& m2)const;
+
         void write_as_gdl(
             std::ofstream& out,
             bool uppercase_player,
@@ -52,6 +54,8 @@ class moves_sum{
         moves_sum(moves_sum&& src);
         moves_sum& operator=(moves_sum&& src);
         ~moves_sum(void);
+
+        bool operator==(const moves_sum& m2)const;
 
         std::string to_string(void)const;
 
@@ -86,6 +90,8 @@ class moves_concatenation{
         moves_concatenation(moves_concatenation&& src);
         moves_concatenation& operator=(moves_concatenation&& src);
         ~moves_concatenation(void);
+
+        bool operator==(const moves_concatenation& m2)const;
 
         std::string to_string(void)const;
 
@@ -130,12 +136,16 @@ class bracketed_move{
         bracketed_move& operator=(bracketed_move&& src);
         ~bracketed_move(void);
 
+        bool operator==(const bracketed_move& m2)const;
+        bool can_be_merged(const bracketed_move& m2)const;
+
         std::string to_string(void)const;
 
         bracketed_move& increment(void);
         bracketed_move& decrement(void);
         bracketed_move& set_star(void);
         bracketed_move& set_number(uint number);
+        uint get_number_of_repetitions(void)const;
 
         uint max_number_of_repetitions(uint treat_star_as)const;
 
@@ -166,8 +176,7 @@ class bracketed_move{
             const std::string& move_name,
             uint current_id,
             bool uppercase_player,
-            uint& next_free_id,
-            uint repetitions_base)const;
+            uint& next_free_id)const;
 };
 
 #endif

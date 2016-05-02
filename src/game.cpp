@@ -138,7 +138,7 @@ void game::write_initial_state(std::ofstream& out)const{
         uppercase_player_goals.write_initial_capture_states(out, true, turns_limit);
 }
 
-void game::write_pieces_definition(std::ofstream& out, uint repetitions_base)const{
+void game::write_pieces_definition(std::ofstream& out)const{
     out<<"(<= (pieceType ?piece)\n\t(uppercasePieceType ?piece))\n";
     out<<"(<= (pieceType ?piece)\n\t(lowercasePieceType ?piece))\n\n";
     for(const auto& el: piece_moves)
@@ -149,8 +149,8 @@ void game::write_pieces_definition(std::ofstream& out, uint repetitions_base)con
     out<<'\n';
     out<<"(<= (legal ?player noop)\n\t(role ?player)\n\t(not (true (control ?player))))\n\n";
     for(const auto& el: piece_moves){
-        el.write_as_gdl(out,true, repetitions_base);
-        el.write_as_gdl(out,false, repetitions_base);
+        el.write_as_gdl(out,true);
+        el.write_as_gdl(out,false);
     }
 }
 
@@ -246,8 +246,13 @@ void game::write_goals(std::ofstream& out)const{
     out<<")\n";
 }
 
-void game::write_moves_succ(std::ofstream& out, uint repetitions_base)const{
-    out<<succ("movesSucc",repetitions_base)<<'\n';
+void game::write_moves_succ(std::ofstream& out)const{
+    uint max_number = max_number_of_repetitions();
+    if(max_number > 1)
+        for(uint i=0;i<max_number;++i)
+            out<<"(movesSucc "<<i<<' '<<i+1<<")\n";
+    else
+        out<<"no move use repetition pattern\n";
 }
 
 uint game::max_number_of_repetitions(void)const{
@@ -259,7 +264,6 @@ uint game::max_number_of_repetitions(void)const{
 
 void game::write_as_gdl(const std::string& output_file_name){
     std::ofstream out(output_file_name);
-    uint repetitions_base = max_number_of_repetitions();
     out<<separator;
     out<<";; "<<name<<'\n';
     out<<separator<<'\n';
@@ -295,7 +299,7 @@ void game::write_as_gdl(const std::string& output_file_name){
     out<<'\n'<<separator;
     out<<";; Pieces definition\n";
     out<<separator<<'\n';
-    write_pieces_definition(out, repetitions_base);
+    write_pieces_definition(out);
     out<<'\n'<<separator;
     out<<";; Next state logic\n";
     out<<separator<<'\n';
@@ -321,12 +325,10 @@ void game::write_as_gdl(const std::string& output_file_name){
         out<<"\n\t(captureCounterStep ?piece ?prevn ?n)";
         out<<"\n\t(not (captureToWin ?piece ?n)))\n";
     }
-    if(repetitions_base > 1){
-        out<<'\n'<<separator;
-        out<<";; Moves repetition counter\n";
-        out<<separator<<'\n';
-        write_moves_succ(out, repetitions_base);
-    }
+    out<<'\n'<<separator;
+    out<<";; Moves repetition counter\n";
+    out<<separator<<'\n';
+    write_moves_succ(out);
     out<<'\n'<<separator;
     out<<";; Steps counter\n";
     out<<separator<<'\n';

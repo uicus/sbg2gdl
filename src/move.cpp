@@ -46,6 +46,10 @@ single_move& single_move::operator=(single_move&& src){
     return *this;
 }
 
+bool single_move::operator==(const single_move& m2)const{
+    return x_delta == m2.x_delta && y_delta == m2.y_delta && kind == m2.kind;
+}
+
 void single_move::write_as_gdl(
     std::ofstream& out,
     bool uppercase_player,
@@ -104,6 +108,18 @@ moves_sum& moves_sum::operator=(moves_sum&& src){
 }
 
 moves_sum::~moves_sum(void){
+}
+
+bool moves_sum::operator==(const moves_sum& m2)const{
+    // that operator compares trees instead of sets of moves
+    if(m.size() != m2.m.size())
+        return false;
+    else{
+        for(uint i=0;i<m.size();++i)
+            if(!(m[i] == m2.m[i]))
+                return false;
+        return true;
+    }
 }
 
 void moves_sum::wrap_in_brackets(void){
@@ -258,6 +274,17 @@ moves_concatenation& moves_concatenation::operator=(moves_concatenation&& src){
 moves_concatenation::~moves_concatenation(void){
 }
 
+bool moves_concatenation::operator==(const moves_concatenation& m2)const{
+    if(m.size() != m2.m.size())
+        return false;
+    else{
+        for(uint i=0;i<m.size();++i)
+            if(!(m[i] == m2.m[i]))
+                return false;
+        return true;
+    }
+}
+
 void moves_concatenation::wrap_in_brackets(void){
     moves_concatenation this_move;
     this_move.m = std::move(m);
@@ -268,7 +295,10 @@ void moves_concatenation::wrap_in_brackets(void){
 }
 
 moves_concatenation& moves_concatenation::append(bracketed_move&& bm){
-    m.push_back(std::move(bm));
+    if(m.size() > 0 && m.back().can_be_merged(bm))
+        m.back().set_number(m.back().get_number_of_repetitions()+bm.get_number_of_repetitions());
+    else
+        m.push_back(std::move(bm));
     return *this;
 }
 
@@ -471,6 +501,28 @@ bracketed_move::~bracketed_move(void){
         delete single_m;
 }
 
+bool bracketed_move::operator==(const bracketed_move& m2)const{
+    if(sum != m2.sum)
+        return false;
+    else{
+        if(sum)
+            return number_of_repetitions == m2.number_of_repetitions && *m_sum == *(m2.m_sum);
+        else
+            return number_of_repetitions == m2.number_of_repetitions && *single_m == *(m2.single_m);
+    }
+}
+
+bool bracketed_move::can_be_merged(const bracketed_move& m2)const{
+    if(sum != m2.sum || number_of_repetitions == 0 || m2.number_of_repetitions == 0)
+        return false;
+    else{
+        if(sum)
+            return *m_sum == *(m2.m_sum);
+        else
+            return *single_m == *(m2.single_m);
+    }
+}
+
 bracketed_move& bracketed_move::increment(void){
     if(number_of_repetitions > 0)
         ++number_of_repetitions;
@@ -491,6 +543,10 @@ bracketed_move& bracketed_move::set_star(void){
 bracketed_move& bracketed_move::set_number(uint number){
     number_of_repetitions = number;
     return *this;
+}
+
+uint bracketed_move::get_number_of_repetitions(void)const{
+    return number_of_repetitions;
 }
 
 uint bracketed_move::max_number_of_repetitions(uint treat_star_as)const{
@@ -555,11 +611,10 @@ void bracketed_move::write_freestanding_predicate(
     const std::string& move_name,
     uint current_id,
     bool uppercase_player,
-    uint& next_free_id,
-    uint repetitions_base)const{
+    uint& next_free_id)const{
     if(number_of_repetitions > 0){
-        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number(number_of_repetitions, repetitions_base)<<"))\n";
-        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y "<<number(0, repetitions_base)<<")\n\t(file ?x)\n\t(rank ?y))\n";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number_of_repetitions<<"))\n";
+        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y 0)\n\t(file ?x)\n\t(rank ?y))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
         out<<"\n\t(movesSucc ?prevn ?n)";
         write_one_repetition(
@@ -575,7 +630,7 @@ void bracketed_move::write_freestanding_predicate(
         out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?prevn))\n\n";
     }
     else{ // star
-        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number(0, repetitions_base)<<"))\n";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout 0))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y ?n)\n\t(file ?x)\n\t(rank ?y)\n\t(movesSucc ?n ?succn))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
         out<<"\n\t(movesSucc ?n ?succn)";

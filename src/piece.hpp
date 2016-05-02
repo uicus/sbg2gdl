@@ -37,7 +37,7 @@ class piece{
 
         uint max_number_of_repetitions(uint treat_star_as)const;
 
-        void write_as_gdl(std::ofstream& out, bool uppercase, uint repetitions_base)const;
+        void write_as_gdl(std::ofstream& out, bool uppercase)const;
 };
 
 std::vector<piece> parse_pieces(
