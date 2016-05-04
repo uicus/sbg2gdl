@@ -630,10 +630,8 @@ void bracketed_move::write_freestanding_predicate(
         out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?prevn))\n\n";
     }
     else{ // star
-        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout 0))\n";
-        out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y ?n)\n\t(file ?x)\n\t(rank ?y)\n\t(movesSucc ?n ?succn))\n";
-        out<<"(<= ("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout ?n)";
-        out<<"\n\t(movesSucc ?n ?succn)";
+        out<<"(<= ("<<move_name<<current_id<<" ?x ?y ?x ?y)\n\t(file ?x)\n\t(rank ?y))\n";
+        out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)";
         write_one_repetition(
             out,
             additional_moves_to_write,
@@ -644,7 +642,7 @@ void bracketed_move::write_freestanding_predicate(
             "nextx",
             "nexty",
             next_free_id);
-        out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?succn))\n\n";
+        out<<"\n\t("<<move_name<<current_id<<" ?nextx ?nexty ?xout ?yout))\n\n";
     }
 }
 
