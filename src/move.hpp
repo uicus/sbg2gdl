@@ -2,6 +2,8 @@
 #define MOVE
 
 #include<vector>
+#include<set>
+#include<map>
 #include<string>
 #include<fstream>
 
@@ -17,6 +19,18 @@ class moves_concatenation;
 class bracketed_move;
 class moves_sum;
 typedef moves_sum move;
+
+class reuse_tool{
+        std::map<moves_sum, std::string> known_sums;
+        std::map<bracketed_move, std::string> known_bracketed;
+    public:
+        reuse_tool(void);
+        reuse_tool(const reuse_tool& src);
+        reuse_tool& operator=(const reuse_tool& src);
+        reuse_tool(reuse_tool&& src);
+        reuse_tool& operator=(reuse_tool&& src);
+        ~reuse_tool(void);
+};
 
 class single_move{
         int x_delta;
@@ -34,6 +48,7 @@ class single_move{
         std::string to_string(void)const;
 
         bool operator==(const single_move& m2)const;
+        bool operator<(const single_move& m2)const;
 
         void write_as_gdl(
             std::ofstream& out,
@@ -45,7 +60,7 @@ class single_move{
 };
 
 class moves_sum{
-        std::vector<moves_concatenation> m;
+        std::set<moves_concatenation> m;
         void wrap_in_brackets(void);
     public:
         moves_sum(void);
@@ -56,6 +71,7 @@ class moves_sum{
         ~moves_sum(void);
 
         bool operator==(const moves_sum& m2)const;
+        bool operator<(const moves_sum& m2)const;
 
         std::string to_string(void)const;
 
@@ -92,6 +108,7 @@ class moves_concatenation{
         ~moves_concatenation(void);
 
         bool operator==(const moves_concatenation& m2)const;
+        bool operator<(const moves_concatenation& m2)const;
 
         std::string to_string(void)const;
 
@@ -137,6 +154,7 @@ class bracketed_move{
         ~bracketed_move(void);
 
         bool operator==(const bracketed_move& m2)const;
+        bool operator<(const bracketed_move& m2)const;
         bool can_be_merged(const bracketed_move& m2)const;
 
         std::string to_string(void)const;

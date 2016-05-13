@@ -373,7 +373,6 @@ parser_result<int> parser::expect_int(void){
     }
     return result; // unreachable
 }
-
 parser_result<move> parser::expect_move_pattern(void){
     parser_result<move> result{false,true,move(),{0,0,""}};
     fallback_point fbp = save_fallback_point();

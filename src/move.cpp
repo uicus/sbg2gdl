@@ -1,6 +1,40 @@
 #include"move.hpp"
 #include"gdl_constants.hpp"
 
+reuse_tool::reuse_tool(void):
+known_sums(),
+known_bracketed(){
+}
+
+reuse_tool::reuse_tool(const reuse_tool& src):
+known_sums(src.known_sums),
+known_bracketed(src.known_bracketed){
+}
+
+reuse_tool& reuse_tool::operator=(const reuse_tool& src){
+    if(this == &src)
+        return *this;
+    known_sums = src.known_sums;
+    known_bracketed = src.known_bracketed;
+    return *this;
+}
+
+reuse_tool::reuse_tool(reuse_tool&& src):
+known_sums(std::move(src.known_sums)),
+known_bracketed(std::move(src.known_bracketed)){
+}
+
+reuse_tool& reuse_tool::operator=(reuse_tool&& src){
+    if(this == &src)
+        return *this;
+    known_sums = std::move(src.known_sums);
+    known_bracketed = std::move(src.known_bracketed);
+    return *this;
+}
+
+reuse_tool::~reuse_tool(void){
+}
+
 single_move::single_move(void):
 x_delta(0),
 y_delta(0),
@@ -48,6 +82,12 @@ single_move& single_move::operator=(single_move&& src){
 
 bool single_move::operator==(const single_move& m2)const{
     return x_delta == m2.x_delta && y_delta == m2.y_delta && kind == m2.kind;
+}
+
+bool single_move::operator<(const single_move& m2)const{
+    return x_delta < m2.x_delta
+        || (x_delta == m2.x_delta && y_delta < m2.y_delta)
+        || (x_delta == m2.x_delta && y_delta == m2.y_delta && kind < m2.kind);
 }
 
 void single_move::write_as_gdl(
@@ -111,15 +151,24 @@ moves_sum::~moves_sum(void){
 }
 
 bool moves_sum::operator==(const moves_sum& m2)const{
-    // that operator compares trees instead of sets of moves
     if(m.size() != m2.m.size())
         return false;
     else{
-        for(uint i=0;i<m.size();++i)
-            if(!(m[i] == m2.m[i]))
+        for(auto i1=m.begin(), i2=m2.m.begin();i1!=m.end() && i2!=m2.m.end();++i1,++i2)
+            if(!(*i1 == *i2))
                 return false;
         return true;
     }
+}
+
+bool moves_sum::operator<(const moves_sum& m2)const{
+    for(auto i1=m.begin(), i2=m2.m.begin();i1!=m.end() && i2!=m2.m.end();++i1,++i2){
+        if(*i1 < *i2)
+            return true;
+        if(*i2 < *i1)
+            return false;
+    }
+    return m.size()<m2.m.size();
 }
 
 void moves_sum::wrap_in_brackets(void){
@@ -128,50 +177,56 @@ void moves_sum::wrap_in_brackets(void){
     bracketed_move bm(std::move(this_move));
     moves_concatenation mc;
     mc.append(std::move(bm));
-    m = std::vector<moves_concatenation>{mc};
+    m = std::set<moves_concatenation>{mc};
 }
 
 moves_sum& moves_sum::append(moves_concatenation&& mc){
-    m.push_back(std::move(mc));
+    m.insert(std::move(mc));
     return *this;
 }
 
 moves_sum& moves_sum::add_moves(moves_sum&& src){
     if(m.size() < src.m.size())
         std::swap(m, src.m);
-    if(m.size() + src.m.size() > m.capacity())
-        m.reserve((m.size() + src.m.size())*2);
-    if(this == &src)
-        for(uint i = 0;i<src.m.size();++i)
-            m.push_back(src.m[i]);
-    else if(src.m.size() == 0);
-    else
+    if(this != &src && src.m.size() != 0){
         for(auto& el: src.m)
-            m.push_back(std::move(el));
+            m.insert(std::move(el));
+    }
     return *this;
 }
 
 moves_sum& moves_sum::concat_moves(moves_sum&& src){
     if(m.size() < src.m.size())
-        std::swap(m, src.m);
-    if(m.size() + src.m.size() > m.capacity() && m.size() > 0)
-        m.reserve((m.size() + src.m.size())*2);
-    if(this == &src)
-        for(uint i = 0;i<src.m.size();++i)
-            m.push_back(src.m[i]);
-    else if(m.size() == 0);
+        std::swap(m, src.m); // we assure that this >= src
+    //if(m.size() + src.m.size() > m.capacity() && m.size() > 0)
+    //    m.reserve((m.size() + src.m.size())*2);
+    //if(this == &src)
+    //    for(uint i = 0;i<src.m.size();++i)
+    //        m.push_back(src.m[i]);
+    if(m.size() == 0);
     else if(src.m.size() == 0)
         m.clear();
-    else if(m.size() == 1)
-        m[0].concat_moves(std::move(src.m[0]));
+    else if(m.size() == 1){
+        moves_concatenation result = *m.begin();
+        result.concat_moves(moves_concatenation(*src.m.begin()));
+        //m.clear();
+        m = std::set<moves_concatenation>{result};
+    }
     else{
-        if(src.m.size() == 1)
-            for(auto& el: m)
-                el.concat_moves(moves_concatenation(src.m[0]));
+        if(src.m.size() == 1){
+            std::vector<moves_concatenation> temp(m.size());
+            std::copy(m.begin(),m.end(),temp.begin());
+            for(auto& el: temp)
+                el.concat_moves(moves_concatenation(*src.m.begin()));
+            m = std::set<moves_concatenation>(std::make_move_iterator(temp.begin()),std::make_move_iterator(temp.end()));
+        }
         else{
             wrap_in_brackets();
-            bracketed_move bm2(std::move(src));
-            m[0].append(std::move(bm2));
+            bracketed_move bm2(this == &src ? src : std::move(src));
+            moves_concatenation result = *m.begin();
+            result.append(std::move(bm2));
+            //m.clear();
+            m = std::set<moves_concatenation>{result};
         }
     }
     return *this;
@@ -182,7 +237,9 @@ moves_sum& moves_sum::increment(void){
         return *this;
     if(m.size() > 1)
         wrap_in_brackets();
-    m[0].increment();
+    moves_concatenation result = *m.begin();
+    result.increment();
+    m = std::set<moves_concatenation>{result};
     return *this;
 }
 
@@ -191,7 +248,9 @@ moves_sum& moves_sum::decrement(void){
         return *this;
     if(m.size() > 1)
         wrap_in_brackets();
-    m[0].decrement();
+    moves_concatenation result = *m.begin();
+    result.decrement();
+    m = std::set<moves_concatenation>{result};
     return *this;
 }
 
@@ -200,7 +259,9 @@ moves_sum& moves_sum::set_star(void){
         return *this;
     if(m.size() > 1)
         wrap_in_brackets();
-    m[0].set_star();
+    moves_concatenation result = *m.begin();
+    result.set_star();
+    m = std::set<moves_concatenation>{result};
     return *this;
 }
 
@@ -209,7 +270,9 @@ moves_sum& moves_sum::set_number(uint number_of_repetitions){
         return *this;
     if(m.size() > 1)
         wrap_in_brackets();
-    m[0].set_number(number_of_repetitions);
+    moves_concatenation result = *m.begin();
+    result.set_number(number_of_repetitions);
+    m = std::set<moves_concatenation>{result};
     return *this;
 }
 
@@ -283,6 +346,16 @@ bool moves_concatenation::operator==(const moves_concatenation& m2)const{
                 return false;
         return true;
     }
+}
+
+bool moves_concatenation::operator<(const moves_concatenation& m2)const{
+    for(auto i1=m.begin(), i2=m2.m.begin();i1!=m.end() && i2!=m2.m.end();++i1,++i2){
+        if(*i1 < *i2)
+            return true;
+        if(*i2 < *i1)
+            return false;
+    }
+    return m.size()<m2.m.size();
 }
 
 void moves_concatenation::wrap_in_brackets(void){
@@ -512,6 +585,14 @@ bool bracketed_move::operator==(const bracketed_move& m2)const{
     }
 }
 
+bool bracketed_move::operator<(const bracketed_move& m2)const{
+    if(sum && m2.sum)
+        return *m_sum < *(m2.m_sum) || (*m_sum == *(m2.m_sum) && number_of_repetitions < m2.number_of_repetitions);
+    if(!sum && !m2.sum)
+        return *single_m < *(m2.single_m) || (*single_m == *(m2.single_m) && number_of_repetitions < m2.number_of_repetitions);
+    return !sum;
+}
+
 bool bracketed_move::can_be_merged(const bracketed_move& m2)const{
     if(sum != m2.sum || number_of_repetitions == 0 || m2.number_of_repetitions == 0)
         return false;
@@ -652,10 +733,10 @@ std::string single_move::to_string(void)const{
 
 std::string moves_sum::to_string(void)const{
     std::string result;
-    for(uint i=0;i<m.size()-1;++i)
-        result += m[i].to_string() + '+';
+    for(auto i = m.begin();i!=m.end()--;++i)
+        result += i->to_string() + '+';
     if(m.size() > 0)
-        result += m.back().to_string();
+        result += m.end()->to_string();
     return result;
 }
 
