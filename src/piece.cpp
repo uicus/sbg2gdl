@@ -127,7 +127,11 @@ uint piece::max_number_of_repetitions(uint treat_star_as)const{
     return move_pattern.max_number_of_repetitions(treat_star_as);
 }
 
-void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
+void piece::scan(reuse_tool& known)const{
+    move_pattern.scan_for_concatenations(known);
+}
+
+void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves)const{
     std::vector<std::pair<uint, const move*>> additional_moves;
     std::vector<std::pair<uint, const bracketed_move*>> additional_bracketed_moves;
     additional_moves.push_back(std::make_pair(0,&move_pattern));
@@ -143,12 +147,12 @@ void piece::write_as_gdl(std::ofstream& out, bool uppercase)const{
         while(!additional_moves.empty()){
             move_to_write = additional_moves.back();
             additional_moves.pop_back();
-            move_to_write.second->write_as_gdl(out,additional_moves,additional_bracketed_moves,legal_move_name,move_to_write.first,uppercase,next_free_id);
+            move_to_write.second->write_as_gdl(out,additional_moves,additional_bracketed_moves,known_moves,legal_move_name,move_to_write.first,uppercase,next_free_id);
         }
         while(!additional_bracketed_moves.empty()){
             bracketed_move_to_write = additional_bracketed_moves.back();
             additional_bracketed_moves.pop_back();
-            bracketed_move_to_write.second->write_freestanding_predicate(out,additional_moves,legal_move_name,bracketed_move_to_write.first,uppercase,next_free_id);
+            bracketed_move_to_write.second->write_freestanding_predicate(out,additional_moves,known_moves,legal_move_name,bracketed_move_to_write.first,uppercase,next_free_id);
         }
     }
 }

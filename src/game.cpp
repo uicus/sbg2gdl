@@ -148,9 +148,15 @@ void game::write_pieces_definition(std::ofstream& out)const{
         out<<"(lowercasePieceType "<<piece_name(el.get_symbol(), false)<<")\n";
     out<<'\n';
     out<<"(<= (legal ?player noop)\n\t(role ?player)\n\t(not (true (control ?player))))\n\n";
+    reuse_tool known_uppercase_moves;
+    reuse_tool known_lowercase_moves;
     for(const auto& el: piece_moves){
-        el.write_as_gdl(out,true);
-        el.write_as_gdl(out,false);
+        el.scan(known_uppercase_moves);
+        el.scan(known_lowercase_moves);
+    }
+    for(const auto& el: piece_moves){
+        el.write_as_gdl(out,true, known_uppercase_moves);
+        el.write_as_gdl(out,false, known_lowercase_moves);
     }
 }
 

@@ -23,6 +23,7 @@ typedef moves_sum move;
 class reuse_tool{
         std::map<moves_sum, std::string> known_sums;
         std::map<bracketed_move, std::string> known_bracketed;
+        std::map<std::vector<bracketed_move>, uint> existing_concatenations;
     public:
         reuse_tool(void);
         reuse_tool(const reuse_tool& src);
@@ -30,6 +31,19 @@ class reuse_tool{
         reuse_tool(reuse_tool&& src);
         reuse_tool& operator=(reuse_tool&& src);
         ~reuse_tool(void);
+
+        void insert_new_concatenation(std::vector<bracketed_move>&& src);
+
+        std::string get_or_insert(
+            const moves_sum& src,
+            std::vector<std::pair<uint, const moves_sum*>>& additional_moves_to_write,
+            const std::string& move_name,
+            uint& id);
+        std::string get_or_insert(
+            const bracketed_move& src,
+            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            const std::string& move_name,
+            uint& id);
 };
 
 class single_move{
@@ -86,10 +100,13 @@ class moves_sum{
 
         uint max_number_of_repetitions(uint treat_star_as)const;
 
+        void scan_for_concatenations(reuse_tool& known)const;
+
         void write_as_gdl(
             std::ofstream& out,
             std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
             std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            reuse_tool& known,
             const std::string& move_name,
             uint current_id,
             bool uppercase_player,
@@ -122,10 +139,13 @@ class moves_concatenation{
 
         uint max_number_of_repetitions(uint treat_star_as)const;
 
+        void scan_for_concatenations(reuse_tool& known)const;
+
         void write_as_gdl(
             std::ofstream& out,
             std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
             std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
             const std::string& start_x_name,
@@ -167,10 +187,13 @@ class bracketed_move{
 
         uint max_number_of_repetitions(uint treat_star_as)const;
 
+        void scan_for_concatenations(reuse_tool& known)const;
+
         void write_as_gdl(
             std::ofstream& out,
             std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
             std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
             const std::string& start_x_name,
@@ -181,6 +204,7 @@ class bracketed_move{
         void write_one_repetition(
             std::ofstream& out,
             std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
             const std::string& start_x_name,
@@ -191,6 +215,7 @@ class bracketed_move{
         void write_freestanding_predicate(
             std::ofstream& out,
             std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            reuse_tool& known,
             const std::string& move_name,
             uint current_id,
             bool uppercase_player,

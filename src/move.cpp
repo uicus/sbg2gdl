@@ -3,12 +3,14 @@
 
 reuse_tool::reuse_tool(void):
 known_sums(),
-known_bracketed(){
+known_bracketed(),
+existing_concatenations(){
 }
 
 reuse_tool::reuse_tool(const reuse_tool& src):
 known_sums(src.known_sums),
-known_bracketed(src.known_bracketed){
+known_bracketed(src.known_bracketed),
+existing_concatenations(src.existing_concatenations){
 }
 
 reuse_tool& reuse_tool::operator=(const reuse_tool& src){
@@ -16,12 +18,14 @@ reuse_tool& reuse_tool::operator=(const reuse_tool& src){
         return *this;
     known_sums = src.known_sums;
     known_bracketed = src.known_bracketed;
+    existing_concatenations = src.existing_concatenations;
     return *this;
 }
 
 reuse_tool::reuse_tool(reuse_tool&& src):
 known_sums(std::move(src.known_sums)),
-known_bracketed(std::move(src.known_bracketed)){
+known_bracketed(std::move(src.known_bracketed)),
+existing_concatenations(std::move(src.existing_concatenations)){
 }
 
 reuse_tool& reuse_tool::operator=(reuse_tool&& src){
@@ -29,10 +33,51 @@ reuse_tool& reuse_tool::operator=(reuse_tool&& src){
         return *this;
     known_sums = std::move(src.known_sums);
     known_bracketed = std::move(src.known_bracketed);
+    existing_concatenations = std::move(existing_concatenations);
     return *this;
 }
 
 reuse_tool::~reuse_tool(void){
+}
+
+void reuse_tool::insert_new_concatenation(std::vector<bracketed_move>&& src){
+    auto it = existing_concatenations.find(src);
+    if(it != existing_concatenations.end())
+        ++(it->second);
+    else
+        existing_concatenations.insert(std::pair<std::vector<bracketed_move>, uint>(src, 1));
+}
+
+std::string reuse_tool::get_or_insert(
+const moves_sum& src,
+std::vector<std::pair<uint, const moves_sum*>>& additional_moves_to_write,
+const std::string& move_name,
+uint& id){
+    const auto it = known_sums.find(src);
+    if(it != known_sums.end())
+        return it->second;
+    else{
+        std::string new_name = move_name+std::to_string(id);
+        additional_moves_to_write.push_back(std::make_pair(id++, &src));
+        known_sums.insert(std::pair<moves_sum, std::string>(src, new_name));
+        return new_name;
+    }
+}
+
+std::string reuse_tool::get_or_insert(
+const bracketed_move& src,
+std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+const std::string& move_name,
+uint& id){
+    const auto it = known_bracketed.find(src);
+    if(it != known_bracketed.end())
+        return it->second;
+    else{
+        std::string new_name = move_name+std::to_string(id);
+        additional_bracketed_moves.push_back(std::make_pair(id++, &src));
+        known_bracketed.insert(std::pair<bracketed_move, std::string>(src, new_name));
+        return new_name;
+    }
 }
 
 single_move::single_move(void):
@@ -283,10 +328,16 @@ uint moves_sum::max_number_of_repetitions(uint treat_star_as)const{
     return current_max;
 }
 
+void moves_sum::scan_for_concatenations(reuse_tool& known)const{
+    for(const auto& el: m)
+        el.scan_for_concatenations(known);
+}
+
 void moves_sum::write_as_gdl(
     std::ofstream& out,
     std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
     std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+    reuse_tool& known,
     const std::string& move_name,
     uint current_id,
     bool uppercase_player,
@@ -297,6 +348,7 @@ void moves_sum::write_as_gdl(
             out,
             additional_moves_to_write,
             additional_bracketed_moves,
+            known,
             move_name,
             uppercase_player,
             "xin",
@@ -433,10 +485,19 @@ uint moves_concatenation::max_number_of_repetitions(uint treat_star_as)const{
     return current_max;
 }
 
+void moves_concatenation::scan_for_concatenations(reuse_tool& known)const{
+    for(uint i=0;i+1<m.size();++i)
+        for(uint j=i+2;j<m.size();++j)
+            known.insert_new_concatenation(std::vector<bracketed_move>(m.begin()+i, m.begin()+j));
+    for(const auto& el: m)
+        el.scan_for_concatenations(known);
+}
+
 void moves_concatenation::write_as_gdl(
     std::ofstream& out,
     std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
     std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+    reuse_tool& known,
     const std::string& move_name,
     bool uppercase_player,
     const std::string& start_x_name,
@@ -454,6 +515,7 @@ void moves_concatenation::write_as_gdl(
             out,
             additional_moves_to_write,
             additional_bracketed_moves,
+            known,
             move_name,
             uppercase_player,
             current_start_x_name,
@@ -469,6 +531,7 @@ void moves_concatenation::write_as_gdl(
             out,
             additional_moves_to_write,
             additional_bracketed_moves,
+            known,
             move_name,
             uppercase_player,
             current_start_x_name,
@@ -634,10 +697,16 @@ uint bracketed_move::max_number_of_repetitions(uint treat_star_as)const{
     return std::max(number_of_repetitions == 0 ? treat_star_as : number_of_repetitions, (sum ? m_sum->max_number_of_repetitions(treat_star_as) : 0));
 }
 
+void bracketed_move::scan_for_concatenations(reuse_tool& known)const{
+    if(sum)
+        m_sum->scan_for_concatenations(known);
+}
+
 void bracketed_move::write_as_gdl(
     std::ofstream& out,
     std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
     std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+    reuse_tool& known,
     const std::string& move_name,
     bool uppercase_player,
     const std::string& start_x_name,
@@ -649,6 +718,7 @@ void bracketed_move::write_as_gdl(
         write_one_repetition(
             out,
             additional_moves_to_write,
+            known,
             move_name,
             uppercase_player,
             start_x_name,
@@ -656,15 +726,14 @@ void bracketed_move::write_as_gdl(
             end_x_name,
             end_y_name,
             next_free_id);
-    else{
-        out<<"\n\t("<<move_name<<next_free_id<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
-        additional_bracketed_moves.push_back(std::make_pair(next_free_id++, this));
-    }
+    else
+        out<<"\n\t("<<known.get_or_insert(*this, additional_bracketed_moves, move_name, next_free_id)<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
 }
 
 void bracketed_move::write_one_repetition(
     std::ofstream& out,
     std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    reuse_tool& known,
     const std::string& move_name,
     bool uppercase_player,
     const std::string& start_x_name,
@@ -672,10 +741,8 @@ void bracketed_move::write_one_repetition(
     const std::string& end_x_name,
     const std::string& end_y_name,
     uint& next_free_id)const{
-    if(sum){
-        out<<"\n\t("<<move_name<<next_free_id<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
-        additional_moves_to_write.push_back(std::make_pair(next_free_id++, m_sum));
-    }
+    if(sum)
+        out<<"\n\t("<<known.get_or_insert(*m_sum, additional_moves_to_write, move_name, next_free_id)<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
     else
         single_m->write_as_gdl(
             out,
@@ -689,6 +756,7 @@ void bracketed_move::write_one_repetition(
 void bracketed_move::write_freestanding_predicate(
     std::ofstream& out,
     std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+    reuse_tool& known,
     const std::string& move_name,
     uint current_id,
     bool uppercase_player,
@@ -701,6 +769,7 @@ void bracketed_move::write_freestanding_predicate(
         write_one_repetition(
             out,
             additional_moves_to_write,
+            known,
             move_name,
             uppercase_player,
             "xin",
@@ -716,6 +785,7 @@ void bracketed_move::write_freestanding_predicate(
         write_one_repetition(
             out,
             additional_moves_to_write,
+            known,
             move_name,
             uppercase_player,
             "xin",

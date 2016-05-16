@@ -36,8 +36,9 @@ class piece{
         char get_symbol(void)const;
 
         uint max_number_of_repetitions(uint treat_star_as)const;
+        void scan(reuse_tool& known)const;
 
-        void write_as_gdl(std::ofstream& out, bool uppercase)const;
+        void write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves)const;
 };
 
 std::vector<piece> parse_pieces(
