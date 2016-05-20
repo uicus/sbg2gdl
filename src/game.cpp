@@ -138,7 +138,7 @@ void game::write_initial_state(std::ofstream& out)const{
         uppercase_player_goals.write_initial_capture_states(out, true, turns_limit);
 }
 
-void game::write_pieces_definition(std::ofstream& out)const{
+void game::write_pieces_definition(std::ofstream& out, const options& o)const{
     out<<"(<= (pieceType ?piece)\n\t(uppercasePieceType ?piece))\n";
     out<<"(<= (pieceType ?piece)\n\t(lowercasePieceType ?piece))\n\n";
     for(const auto& el: piece_moves)
@@ -150,13 +150,17 @@ void game::write_pieces_definition(std::ofstream& out)const{
     out<<"(<= (legal ?player noop)\n\t(role ?player)\n\t(not (true (control ?player))))\n\n";
     reuse_tool known_uppercase_moves;
     reuse_tool known_lowercase_moves;
-    for(const auto& el: piece_moves){
-        el.scan(known_uppercase_moves);
-        el.scan(known_lowercase_moves);
+    if(o.optimising() > 0){
+        for(const auto& el: piece_moves){
+            el.scan(known_uppercase_moves);
+            el.scan(known_lowercase_moves);
+        }
+        known_uppercase_moves.delete_singletons();
+        known_lowercase_moves.delete_singletons();
     }
     for(const auto& el: piece_moves){
-        el.write_as_gdl(out,true, known_uppercase_moves);
-        el.write_as_gdl(out,false, known_lowercase_moves);
+        el.write_as_gdl(out,true, known_uppercase_moves, o);
+        el.write_as_gdl(out,false, known_lowercase_moves, o);
     }
 }
 
@@ -268,7 +272,7 @@ uint game::max_number_of_repetitions(void)const{
     return current_max;
 }
 
-void game::write_as_gdl(const std::string& output_file_name){
+void game::write_as_gdl(const std::string& output_file_name, const options& o){
     std::ofstream out(output_file_name);
     out<<separator;
     out<<";; "<<name<<'\n';
@@ -305,7 +309,7 @@ void game::write_as_gdl(const std::string& output_file_name){
     out<<'\n'<<separator;
     out<<";; Pieces definition\n";
     out<<separator<<'\n';
-    write_pieces_definition(out);
+    write_pieces_definition(out, o);
     out<<'\n'<<separator;
     out<<";; Next state logic\n";
     out<<separator<<'\n';

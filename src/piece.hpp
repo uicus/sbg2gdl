@@ -8,6 +8,7 @@
 #include"move.hpp"
 #include"parser.hpp"
 #include"parser_events.hpp"
+#include"options.hpp"
 
 class piece_parse_error : public parse_error{
     public:
@@ -38,7 +39,7 @@ class piece{
         uint max_number_of_repetitions(uint treat_star_as)const;
         void scan(reuse_tool& known)const;
 
-        void write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves)const;
+        void write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves, const options& o)const;
 };
 
 std::vector<piece> parse_pieces(

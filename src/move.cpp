@@ -1,16 +1,22 @@
+#include<algorithm>
+
 #include"move.hpp"
 #include"gdl_constants.hpp"
 
 reuse_tool::reuse_tool(void):
 known_sums(),
 known_bracketed(),
-existing_concatenations(){
+existing_concatenations(),
+concatenations_to_add(),
+known_concatenations(){
 }
 
 reuse_tool::reuse_tool(const reuse_tool& src):
 known_sums(src.known_sums),
 known_bracketed(src.known_bracketed),
-existing_concatenations(src.existing_concatenations){
+existing_concatenations(src.existing_concatenations),
+concatenations_to_add(src.concatenations_to_add),
+known_concatenations(src.known_concatenations){
 }
 
 reuse_tool& reuse_tool::operator=(const reuse_tool& src){
@@ -19,13 +25,17 @@ reuse_tool& reuse_tool::operator=(const reuse_tool& src){
     known_sums = src.known_sums;
     known_bracketed = src.known_bracketed;
     existing_concatenations = src.existing_concatenations;
+    concatenations_to_add = src.concatenations_to_add;
+    known_concatenations = src.known_concatenations;
     return *this;
 }
 
 reuse_tool::reuse_tool(reuse_tool&& src):
 known_sums(std::move(src.known_sums)),
 known_bracketed(std::move(src.known_bracketed)),
-existing_concatenations(std::move(src.existing_concatenations)){
+existing_concatenations(std::move(src.existing_concatenations)),
+concatenations_to_add(std::move(src.concatenations_to_add)),
+known_concatenations(std::move(src.known_concatenations)){
 }
 
 reuse_tool& reuse_tool::operator=(reuse_tool&& src){
@@ -33,19 +43,97 @@ reuse_tool& reuse_tool::operator=(reuse_tool&& src){
         return *this;
     known_sums = std::move(src.known_sums);
     known_bracketed = std::move(src.known_bracketed);
-    existing_concatenations = std::move(existing_concatenations);
+    existing_concatenations = std::move(src.existing_concatenations);
+    concatenations_to_add = std::move(src.concatenations_to_add);
+    known_concatenations = std::move(src.known_concatenations);
     return *this;
 }
 
 reuse_tool::~reuse_tool(void){
 }
 
-void reuse_tool::insert_new_concatenation(std::vector<bracketed_move>&& src){
+uint reuse_tool::next_id(void)const{
+    return concatenations_to_add.size()+known_concatenations.size();
+}
+
+void reuse_tool::insert_new_concatenation(moves_concatenation&& src){
     auto it = existing_concatenations.find(src);
     if(it != existing_concatenations.end())
         ++(it->second);
     else
-        existing_concatenations.insert(std::pair<std::vector<bracketed_move>, uint>(src, 1));
+        existing_concatenations.insert(std::pair<moves_concatenation, uint>(src, 1));
+}
+
+void reuse_tool::delete_singletons(void){
+    std::map<moves_concatenation, uint> result;
+    for(const auto& el: existing_concatenations)
+        if(el.second > 1)
+            result.insert(el);
+    existing_concatenations = std::move(result);
+}
+
+bool reuse_tool::there_are_new_concatenations(void)const{
+    return !concatenations_to_add.empty();
+}
+
+std::pair<uint, uint> reuse_tool::best_subconcatenation(const moves_concatenation& src, bool can_be_whole)const{
+    for(uint l=src.length()-(can_be_whole ? 0 : 1);l>1;--l){
+        uint current_max_pos = 0;
+        uint current_max = 0;
+        for(uint i=0;i<src.length()-l+1;++i){
+            const moves_concatenation now_checked = src.sub_move(i,i+l);
+            if(existing_concatenations.count(now_checked)){
+                const uint result = existing_concatenations.find(now_checked)->second;
+                if(result > current_max){
+                    current_max_pos = i;
+                    current_max = result;
+                }
+            }
+        }
+        if(current_max > 0)
+            return std::make_pair(current_max_pos, current_max_pos+l);
+    }
+    return std::make_pair(0,0);
+}
+
+void reuse_tool::write_all_concatenations(
+std::ofstream& out,
+std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+bool uppercase_player,
+uint& next_free_id,
+const options& o){
+    while(there_are_new_concatenations()){
+        auto next_to_write = concatenations_to_add.begin();
+        moves_concatenation temp = next_to_write->first;
+        temp.write_freestanding_predicate(
+            out,
+            additional_moves_to_write,
+            additional_bracketed_moves,
+            *this,
+            next_to_write->second,
+            uppercase_player,
+            next_free_id,
+            o);
+        known_concatenations[temp] = concatenations_to_add[temp];
+        concatenations_to_add.erase(temp);
+    }
+}
+
+std::string reuse_tool::get_or_insert(const moves_concatenation& src, bool uppercase){
+    const auto it = known_concatenations.find(src);
+    if(it != known_concatenations.end())
+        return it->second;
+    else{
+        const auto it2 = concatenations_to_add.find(src);
+        if(it2 != concatenations_to_add.end())
+            return it2->second;
+        else{
+            std::string new_name = std::string(uppercase ? "uppercase" : "lowercase") + "ConcatenationHelper"+std::to_string(next_id());
+            concatenations_to_add.insert(std::pair<moves_concatenation, std::string>(src, new_name));
+            return new_name;
+        }
+    }
 }
 
 std::string reuse_tool::get_or_insert(
@@ -243,18 +331,12 @@ moves_sum& moves_sum::add_moves(moves_sum&& src){
 moves_sum& moves_sum::concat_moves(moves_sum&& src){
     if(m.size() < src.m.size())
         std::swap(m, src.m); // we assure that this >= src
-    //if(m.size() + src.m.size() > m.capacity() && m.size() > 0)
-    //    m.reserve((m.size() + src.m.size())*2);
-    //if(this == &src)
-    //    for(uint i = 0;i<src.m.size();++i)
-    //        m.push_back(src.m[i]);
     if(m.size() == 0);
     else if(src.m.size() == 0)
         m.clear();
     else if(m.size() == 1){
         moves_concatenation result = *m.begin();
         result.concat_moves(moves_concatenation(*src.m.begin()));
-        //m.clear();
         m = std::set<moves_concatenation>{result};
     }
     else{
@@ -270,7 +352,6 @@ moves_sum& moves_sum::concat_moves(moves_sum&& src){
             bracketed_move bm2(this == &src ? src : std::move(src));
             moves_concatenation result = *m.begin();
             result.append(std::move(bm2));
-            //m.clear();
             m = std::set<moves_concatenation>{result};
         }
     }
@@ -341,7 +422,8 @@ void moves_sum::write_as_gdl(
     const std::string& move_name,
     uint current_id,
     bool uppercase_player,
-    uint& next_free_id)const{
+    uint& next_free_id,
+    const options& o)const{
     for(const auto& el: m){
         out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)";
         el.write_as_gdl(
@@ -355,7 +437,8 @@ void moves_sum::write_as_gdl(
             "yin",
             "xout",
             "yout",
-            next_free_id);
+            next_free_id,
+            o);
         out<<")\n\n";
     }
 }
@@ -408,6 +491,10 @@ bool moves_concatenation::operator<(const moves_concatenation& m2)const{
             return false;
     }
     return m.size()<m2.m.size();
+}
+
+uint moves_concatenation::length(void)const{
+    return m.size();
 }
 
 void moves_concatenation::wrap_in_brackets(void){
@@ -484,11 +571,16 @@ uint moves_concatenation::max_number_of_repetitions(uint treat_star_as)const{
         current_max = std::max(current_max, el.max_number_of_repetitions(treat_star_as));
     return current_max;
 }
+moves_concatenation moves_concatenation::sub_move(uint begin, uint end)const{
+    moves_concatenation result;
+    result.m = std::vector<bracketed_move>(m.begin()+begin, m.begin()+end);
+    return result;
+}
 
 void moves_concatenation::scan_for_concatenations(reuse_tool& known)const{
     for(uint i=0;i+1<m.size();++i)
-        for(uint j=i+2;j<m.size();++j)
-            known.insert_new_concatenation(std::vector<bracketed_move>(m.begin()+i, m.begin()+j));
+        for(uint j=i+2;j<m.size()+1;++j)
+            known.insert_new_concatenation(sub_move(i,j));
     for(const auto& el: m)
         el.scan_for_concatenations(known);
 }
@@ -504,41 +596,107 @@ void moves_concatenation::write_as_gdl(
     const std::string& start_y_name,
     const std::string& end_x_name,
     const std::string& end_y_name,
-    uint& next_free_id)const{
-    std::string current_start_x_name = start_x_name;
-    std::string current_start_y_name = start_y_name;
-    std::string current_end_x_name, current_end_y_name;
-    for(uint i=0;i+1<m.size();++i){
-        current_end_x_name = start_x_name+std::to_string(i+1);
-        current_end_y_name = start_y_name+std::to_string(i+1);
-        m[i].write_as_gdl(
+    uint& next_free_id,
+    const options& o,
+    bool can_be_whole)const{
+    std::pair<uint,uint> split_position;
+    if(o.optimising() > 0 && length() > 1 && (split_position = known.best_subconcatenation(*this, can_be_whole)).second > 0){
+        sub_move(0,split_position.first).write_as_gdl(
             out,
             additional_moves_to_write,
             additional_bracketed_moves,
             known,
             move_name,
             uppercase_player,
-            current_start_x_name,
-            current_start_y_name,
-            current_end_x_name,
-            current_end_y_name,
-            next_free_id);
-        current_start_x_name = current_end_x_name;
-        current_start_y_name = current_end_y_name;
-    }
-    if(!m.empty()) // this if is theoretically unnecessary, but just to be sure...
-        m.back().write_as_gdl(
+            start_x_name,
+            start_y_name,
+            start_x_name+"pre",
+            start_y_name+"pre",
+            next_free_id,
+            o);
+        out<<"\n\t("<<known.get_or_insert(sub_move(split_position.first, split_position.second), uppercase_player)<<" ?"<<start_x_name<<"pre ?"<<start_y_name<<"pre ?"<<end_x_name<<"post ?"<<end_y_name<<"post)";
+        sub_move(split_position.second, length()).write_as_gdl(
             out,
             additional_moves_to_write,
             additional_bracketed_moves,
             known,
             move_name,
             uppercase_player,
-            current_start_x_name,
-            current_start_y_name,
+            end_x_name+"post",
+            end_y_name+"post",
             end_x_name,
             end_y_name,
-            next_free_id);
+            next_free_id,
+            o);
+    }
+    else{
+        std::string current_start_x_name = start_x_name;
+        std::string current_start_y_name = start_y_name;
+        std::string current_end_x_name = current_start_x_name;
+        std::string current_end_y_name = current_start_y_name;
+        for(uint i=0;i+1<m.size();++i){
+            current_end_x_name = start_x_name+std::to_string(i+1);
+            current_end_y_name = start_y_name+std::to_string(i+1);
+            m[i].write_as_gdl(
+                out,
+                additional_moves_to_write,
+                additional_bracketed_moves,
+                known,
+                move_name,
+                uppercase_player,
+                current_start_x_name,
+                current_start_y_name,
+                current_end_x_name,
+                current_end_y_name,
+                next_free_id,
+                o);
+            current_start_x_name = current_end_x_name;
+            current_start_y_name = current_end_y_name;
+        }
+        if(!m.empty()) // this if is theoretically unnecessary, but just to be sure...
+            m.back().write_as_gdl(
+                out,
+                additional_moves_to_write,
+                additional_bracketed_moves,
+                known,
+                move_name,
+                uppercase_player,
+                current_start_x_name,
+                current_start_y_name,
+                end_x_name,
+                end_y_name,
+                next_free_id,
+                o);
+        else
+            out<<"\n\t(equal ?"<<start_x_name<<" ?"<<end_x_name<<")\n\t(equal ?"<<start_y_name<<" ?"<<end_y_name<<")";
+    }
+}
+
+void moves_concatenation::write_freestanding_predicate(
+std::ofstream& out,
+std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+reuse_tool& known,
+const std::string& move_name,
+bool uppercase_player,
+uint& next_free_id,
+const options& o)const{
+    out<<"(<= ("<<move_name<<" ?xin ?yin ?xout ?yout)";
+    write_as_gdl(
+        out,
+        additional_moves_to_write,
+        additional_bracketed_moves,
+        known,
+        move_name,
+        uppercase_player,
+        "xin",
+        "yin",
+        "xout",
+        "yout",
+        next_free_id,
+        o,
+        false);
+    out<<")\n\n";
 }
 
 bracketed_move::bracketed_move(const single_move& src):
@@ -713,7 +871,8 @@ void bracketed_move::write_as_gdl(
     const std::string& start_y_name,
     const std::string& end_x_name,
     const std::string& end_y_name,
-    uint& next_free_id)const{
+    uint& next_free_id,
+    const options& o)const{
     if(number_of_repetitions == 1) // if the move is repeated only once, creating another predicate is not worth the effort
         write_one_repetition(
             out,
@@ -725,9 +884,16 @@ void bracketed_move::write_as_gdl(
             start_y_name,
             end_x_name,
             end_y_name,
-            next_free_id);
-    else
-        out<<"\n\t("<<known.get_or_insert(*this, additional_bracketed_moves, move_name, next_free_id)<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+            next_free_id,
+            o);
+    else{
+        if(o.optimising() > 0)
+            out<<"\n\t("<<known.get_or_insert(*this, additional_bracketed_moves, move_name, next_free_id)<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+        else{
+            out<<"\n\t("<<move_name<<next_free_id<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+            additional_bracketed_moves.push_back(std::make_pair(next_free_id++, this));
+        }
+    }
 }
 
 void bracketed_move::write_one_repetition(
@@ -740,9 +906,16 @@ void bracketed_move::write_one_repetition(
     const std::string& start_y_name,
     const std::string& end_x_name,
     const std::string& end_y_name,
-    uint& next_free_id)const{
-    if(sum)
-        out<<"\n\t("<<known.get_or_insert(*m_sum, additional_moves_to_write, move_name, next_free_id)<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+    uint& next_free_id,
+    const options& o)const{
+    if(sum){
+        if(o.optimising() > 0)
+            out<<"\n\t("<<known.get_or_insert(*m_sum, additional_moves_to_write, move_name, next_free_id)<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+        else{
+            out<<"\n\t("<<move_name<<next_free_id<<" ?"<<start_x_name<<" ?"<<start_y_name<<" ?"<<end_x_name<<" ?"<<end_y_name<<")";
+            additional_moves_to_write.push_back(std::make_pair(next_free_id++, m_sum));
+        }
+    }
     else
         single_m->write_as_gdl(
             out,
@@ -760,7 +933,8 @@ void bracketed_move::write_freestanding_predicate(
     const std::string& move_name,
     uint current_id,
     bool uppercase_player,
-    uint& next_free_id)const{
+    uint& next_free_id,
+    const options& o)const{
     if(number_of_repetitions > 0){
         out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)\n\t("<<move_name<<current_id<<"helper ?xin ?yin ?xout ?yout "<<number_of_repetitions<<"))\n";
         out<<"(<= ("<<move_name<<current_id<<"helper ?x ?y ?x ?y 0)\n\t(file ?x)\n\t(rank ?y))\n";
@@ -776,7 +950,8 @@ void bracketed_move::write_freestanding_predicate(
             "yin",
             "nextx",
             "nexty",
-            next_free_id);
+            next_free_id,
+            o);
         out<<"\n\t("<<move_name<<current_id<<"helper ?nextx ?nexty ?xout ?yout ?prevn))\n\n";
     }
     else{ // star
@@ -792,7 +967,8 @@ void bracketed_move::write_freestanding_predicate(
             "yin",
             "nextx",
             "nexty",
-            next_free_id);
+            next_free_id,
+            o);
         out<<"\n\t("<<move_name<<current_id<<" ?nextx ?nexty ?xout ?yout))\n\n";
     }
 }

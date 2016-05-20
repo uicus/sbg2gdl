@@ -29,7 +29,7 @@ int main(int argc, const char** argv){
                 for(auto const& w: warnings_list)
                     std::cerr<<w.to_string(o.escalating_warnings())<<std::endl;
             if(!o.verifying()){
-                g.write_as_gdl(o.output_file());
+                g.write_as_gdl(o.output_file(), o);
                 std::cout<<"Produced "<<o.output_file()<<std::endl;
             }
         }

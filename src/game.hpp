@@ -10,6 +10,7 @@
 #include"goals.hpp"
 #include"types.hpp"
 #include"parser_events.hpp"
+#include"options.hpp"
 
 class game{
         std::string name;
@@ -30,7 +31,7 @@ class game{
         void write_base(std::ofstream& out)const;
         void write_input(std::ofstream& out)const;
         void write_initial_state(std::ofstream& out)const;
-        void write_pieces_definition(std::ofstream& out)const;
+        void write_pieces_definition(std::ofstream& out, const options& o)const;
         void write_next_state_logic(std::ofstream& out)const;
         void write_terminal_state(std::ofstream& out)const;
         void write_goals(std::ofstream& out)const;
@@ -45,7 +46,7 @@ class game{
 
         friend game parse_game(const std::string& file_name, std::vector<warning>& warnings_list)throw(parse_error);
 
-        void write_as_gdl(const std::string& output_file_name);
+        void write_as_gdl(const std::string& output_file_name, const options& o);
 };
 
 game parse_game(const std::string& file_name, std::vector<warning>& warnings_list)throw(parse_error);

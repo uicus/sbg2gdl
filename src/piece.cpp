@@ -131,7 +131,7 @@ void piece::scan(reuse_tool& known)const{
     move_pattern.scan_for_concatenations(known);
 }
 
-void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves)const{
+void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves, const options& o)const{
     std::vector<std::pair<uint, const move*>> additional_moves;
     std::vector<std::pair<uint, const bracketed_move*>> additional_bracketed_moves;
     additional_moves.push_back(std::make_pair(0,&move_pattern));
@@ -143,16 +143,40 @@ void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_m
     std::pair<uint, const move*> move_to_write;
     std::pair<uint, const bracketed_move*> bracketed_move_to_write;
     uint next_free_id = 1;
-    while(!additional_moves.empty() || !additional_bracketed_moves.empty()){
+    while(!additional_moves.empty() || !additional_bracketed_moves.empty() || known_moves.there_are_new_concatenations()){
         while(!additional_moves.empty()){
             move_to_write = additional_moves.back();
             additional_moves.pop_back();
-            move_to_write.second->write_as_gdl(out,additional_moves,additional_bracketed_moves,known_moves,legal_move_name,move_to_write.first,uppercase,next_free_id);
+            move_to_write.second->write_as_gdl(
+                out,
+                additional_moves,
+                additional_bracketed_moves,
+                known_moves,
+                legal_move_name,
+                move_to_write.first,
+                uppercase,
+                next_free_id,
+                o);
         }
         while(!additional_bracketed_moves.empty()){
             bracketed_move_to_write = additional_bracketed_moves.back();
             additional_bracketed_moves.pop_back();
-            bracketed_move_to_write.second->write_freestanding_predicate(out,additional_moves,known_moves,legal_move_name,bracketed_move_to_write.first,uppercase,next_free_id);
+            bracketed_move_to_write.second->write_freestanding_predicate(
+                out,
+                additional_moves,
+                known_moves,
+                legal_move_name,
+                bracketed_move_to_write.first,
+                uppercase,
+                next_free_id,
+                o);
         }
+        known_moves.write_all_concatenations(
+            out,
+            additional_moves,
+            additional_bracketed_moves,
+            uppercase,
+            next_free_id,
+            o);
     }
 }
