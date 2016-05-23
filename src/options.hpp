@@ -25,6 +25,7 @@ class options{
         bool optimise_domain : 1;
         bool show_warnings : 1;
         bool warnings_as_errors : 1;
+        bool unsafe : 1;
         uint optimisation_level : 2;
         std::string output_name;
     public:
@@ -40,6 +41,7 @@ class options{
         bool domain_optimising(void)const;
         bool showing_warnings(void)const;
         bool escalating_warnings(void)const;
+        bool allowed_unsafe(void)const;
         uint optimising(void)const;
         const std::string& output_file(void)const;
 };

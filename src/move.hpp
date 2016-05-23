@@ -39,24 +39,25 @@ class reuse_tool{
         void insert_new_concatenation(moves_concatenation&& src);
         void delete_singletons(void);
         bool there_are_new_concatenations(void)const;
-        std::pair<uint, uint> best_subconcatenation(const moves_concatenation& src, bool can_be_whole)const;
+        std::pair<uint, uint> best_subconcatenation(const moves_concatenation& src, uint from, uint to, bool can_be_whole)const;
         void write_all_concatenations(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
-            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
+            std::vector<std::pair<uint, bracketed_move>>& additional_bracketed_moves,
             bool uppercase_player,
+            const std::string& original_name,
             uint& next_free_id,
             const options& o);
 
         std::string get_or_insert(const moves_concatenation& src, bool uppercase);
         std::string get_or_insert(
             const moves_sum& src,
-            std::vector<std::pair<uint, const moves_sum*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, moves_sum>>& additional_moves_to_write,
             const std::string& move_name,
             uint& id);
         std::string get_or_insert(
             const bracketed_move& src,
-            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            std::vector<std::pair<uint, bracketed_move>>& additional_bracketed_moves,
             const std::string& move_name,
             uint& id);
 };
@@ -119,8 +120,8 @@ class moves_sum{
 
         void write_as_gdl(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
-            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
+            std::vector<std::pair<uint, bracketed_move>>& additional_bracketed_moves,
             reuse_tool& known,
             const std::string& move_name,
             uint current_id,
@@ -161,8 +162,8 @@ class moves_concatenation{
 
         void write_as_gdl(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
-            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
+            std::vector<std::pair<uint, bracketed_move>>& additional_bracketed_moves,
             reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
@@ -172,14 +173,17 @@ class moves_concatenation{
             const std::string& end_y_name,
             uint& next_free_id,
             const options& o,
+            uint from,
+            uint to,
             bool can_be_whole = true)const;
         void write_freestanding_predicate(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
-            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
+            std::vector<std::pair<uint, bracketed_move>>& additional_bracketed_moves,
             reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
+            const std::string& original_name,
             uint& next_free_id,
             const options& o)const;
 };
@@ -220,8 +224,8 @@ class bracketed_move{
 
         void write_as_gdl(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
-            std::vector<std::pair<uint, const bracketed_move*>>& additional_bracketed_moves,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
+            std::vector<std::pair<uint, bracketed_move>>& additional_bracketed_moves,
             reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
@@ -233,7 +237,7 @@ class bracketed_move{
             const options& o)const;
         void write_one_repetition(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
             reuse_tool& known,
             const std::string& move_name,
             bool uppercase_player,
@@ -245,7 +249,7 @@ class bracketed_move{
             const options& o)const;
         void write_freestanding_predicate(
             std::ofstream& out,
-            std::vector<std::pair<uint, const move*>>& additional_moves_to_write,
+            std::vector<std::pair<uint, move>>& additional_moves_to_write,
             reuse_tool& known,
             const std::string& move_name,
             uint current_id,

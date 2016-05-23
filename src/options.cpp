@@ -46,6 +46,7 @@ just_verify(false),
 optimise_domain(false),
 show_warnings(true),
 warnings_as_errors(false),
+unsafe(false),
 optimisation_level(0),
 output_name("a.gdl"){
 }
@@ -55,6 +56,7 @@ just_verify(false),
 optimise_domain(false),
 show_warnings(true),
 warnings_as_errors(false),
+unsafe(false),
 optimisation_level(0),
 output_name("a.gdl"){
     for(uint i=0;i<number_of_args;++i){
@@ -82,6 +84,8 @@ output_name("a.gdl"){
                 show_warnings = false;
             else if(!std::strcmp(args[i], "-Werror"))
                 warnings_as_errors = true;
+            else if(!std::strcmp(args[i], "-unsafe"))
+                unsafe = true;
             else
                 throw wrong_argument_error("Unrecognized flag");
         }
@@ -93,6 +97,7 @@ just_verify(source.just_verify),
 optimise_domain(source.optimise_domain),
 show_warnings(source.show_warnings),
 warnings_as_errors(source.warnings_as_errors),
+unsafe(source.unsafe),
 optimisation_level(source.optimisation_level),
 output_name(source.output_name){
 }
@@ -104,6 +109,7 @@ options& options::operator=(const options& source){
     optimise_domain = source.optimise_domain;
     show_warnings = source.show_warnings;
     warnings_as_errors = source.warnings_as_errors;
+    unsafe = source.unsafe;
     optimisation_level = source.optimisation_level;
     output_name = source.output_name;
     return *this;
@@ -114,6 +120,7 @@ just_verify(source.just_verify),
 optimise_domain(source.optimise_domain),
 show_warnings(source.show_warnings),
 warnings_as_errors(source.warnings_as_errors),
+unsafe(source.unsafe),
 optimisation_level(source.optimisation_level),
 output_name(std::move(source.output_name)){
 }
@@ -125,6 +132,7 @@ options& options::operator=(options&& source){
     optimise_domain = source.optimise_domain;
     show_warnings = source.show_warnings;
     warnings_as_errors = source.warnings_as_errors;
+    unsafe = source.unsafe;
     optimisation_level = source.optimisation_level;
     output_name = std::move(source.output_name);
     return *this;
@@ -146,6 +154,10 @@ bool options::showing_warnings(void)const{
 }
 bool options::escalating_warnings(void)const{
     return warnings_as_errors;
+}
+
+bool options::allowed_unsafe(void)const{
+    return unsafe;
 }
 
 uint options::optimising(void)const{

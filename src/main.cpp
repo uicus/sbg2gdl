@@ -16,6 +16,7 @@ int main(int argc, const char** argv){
         std::cerr<<"\"-v\" - just verify input; do not generate output file"<<std::endl;
         std::cerr<<"\"-Whide\" - do not show warnings"<<std::endl;
         std::cerr<<"\"-Werror\" - treat warnings as errors"<<std::endl;
+        std::cerr<<"\"-unsafe\" - generated code does not strictly follows GDL standard but can be faster on some reasoners"<<std::endl;
     }
     else{
         try{

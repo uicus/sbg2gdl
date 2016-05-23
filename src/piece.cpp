@@ -131,23 +131,23 @@ void piece::scan(reuse_tool& known)const{
     move_pattern.scan_for_concatenations(known);
 }
 
+#include<iostream>
+
 void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves, const options& o)const{
-    std::vector<std::pair<uint, const move*>> additional_moves;
-    std::vector<std::pair<uint, const bracketed_move*>> additional_bracketed_moves;
-    additional_moves.push_back(std::make_pair(0,&move_pattern));
+    std::vector<std::pair<uint, move>> additional_moves;
+    std::vector<std::pair<uint, bracketed_move>> additional_bracketed_moves;
+    additional_moves.push_back(std::make_pair(0,move_pattern));
     const std::string legal_move_name = std::string("legal")+piece_name(symbol, uppercase)+"Move";
     out<<"(<= (legal "<<player_name(uppercase)<<" (move ?xin ?yin ?xout ?yout))";
     out<<"\n\t(true (control "<<player_name(uppercase)<<"))";
     out<<"\n\t(true (cell ?xin ?yin "<<piece_name(symbol, uppercase)<<"))";
     out<<"\n\t("<<legal_move_name<<"0 ?xin ?yin ?xout ?yout))\n\n";
-    std::pair<uint, const move*> move_to_write;
-    std::pair<uint, const bracketed_move*> bracketed_move_to_write;
     uint next_free_id = 1;
     while(!additional_moves.empty() || !additional_bracketed_moves.empty() || known_moves.there_are_new_concatenations()){
         while(!additional_moves.empty()){
-            move_to_write = additional_moves.back();
+            std::pair<uint, move> move_to_write = additional_moves.back();
             additional_moves.pop_back();
-            move_to_write.second->write_as_gdl(
+            move_to_write.second.write_as_gdl(
                 out,
                 additional_moves,
                 additional_bracketed_moves,
@@ -159,9 +159,9 @@ void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_m
                 o);
         }
         while(!additional_bracketed_moves.empty()){
-            bracketed_move_to_write = additional_bracketed_moves.back();
+            std::pair<uint, bracketed_move> bracketed_move_to_write = additional_bracketed_moves.back();
             additional_bracketed_moves.pop_back();
-            bracketed_move_to_write.second->write_freestanding_predicate(
+            bracketed_move_to_write.second.write_freestanding_predicate(
                 out,
                 additional_moves,
                 known_moves,
@@ -176,6 +176,7 @@ void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_m
             additional_moves,
             additional_bracketed_moves,
             uppercase,
+            legal_move_name,
             next_free_id,
             o);
     }
