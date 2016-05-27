@@ -46,8 +46,14 @@ just_verify(false),
 optimise_domain(false),
 show_warnings(true),
 warnings_as_errors(false),
-unsafe(false),
-optimisation_level(0),
+prolog_safe(false),
+logarithmic_c(true),
+share_c(false),
+share_r(false),
+share_s(false),
+skip_i(false),
+skip_b(false),
+skip_c(false),
 output_name("a.gdl"){
 }
 
@@ -56,8 +62,14 @@ just_verify(false),
 optimise_domain(false),
 show_warnings(true),
 warnings_as_errors(false),
-unsafe(false),
-optimisation_level(0),
+prolog_safe(false),
+logarithmic_c(true),
+share_c(false),
+share_r(false),
+share_s(false),
+skip_i(false),
+skip_b(false),
+skip_c(false),
 output_name("a.gdl"){
     for(uint i=0;i<number_of_args;++i){
         if(args[i][0] != '-')
@@ -77,15 +89,47 @@ output_name("a.gdl"){
             else if(args[i][1] == 'O'){
                 if(args[i][2] < '0' || args[i][2] > '3' || args[i][3] != '\0')
                     throw wrong_argument_error("Unsupported optimisation level");
-                else
-                    optimisation_level = args[i][2] - '0';
+                else{
+                    uint optimisation_level = args[i][2] - '0';
+                    switch(optimisation_level){
+                    case 0:
+                        prolog_safe = true;
+                        logarithmic_c = false;
+                        share_c = false;
+                        share_r = false;
+                        share_s = false;
+                        break;
+                    case 1:
+                    default:
+                        prolog_safe = false;
+                        logarithmic_c = true;
+                        share_c = true;
+                        share_r = true;
+                        share_s = true;
+                        break;
+                    }
+                }
             }
             else if(!std::strcmp(args[i], "-Whide"))
                 show_warnings = false;
             else if(!std::strcmp(args[i], "-Werror"))
                 warnings_as_errors = true;
-            else if(!std::strcmp(args[i], "-unsafe"))
-                unsafe = true;
+            else if(!std::strcmp(args[i], "-skip-input"))
+                skip_i = true;
+            else if(!std::strcmp(args[i], "-skip-base"))
+                skip_b = true;
+            else if(!std::strcmp(args[i], "-skip-comments"))
+                skip_c = true;
+            else if(!std::strcmp(args[i], "-prolog-safe"))
+                prolog_safe = true;
+            else if(!std::strcmp(args[i], "-flinear-turn-counter"))
+                logarithmic_c = false;
+            else if(!std::strcmp(args[i], "-fshare-concatenations"))
+                share_c = true;
+            else if(!std::strcmp(args[i], "-fshare-repetitions"))
+                share_r = true;
+            else if(!std::strcmp(args[i], "-fshare-sums"))
+                share_s = true;
             else
                 throw wrong_argument_error("Unrecognized flag");
         }
@@ -97,8 +141,14 @@ just_verify(source.just_verify),
 optimise_domain(source.optimise_domain),
 show_warnings(source.show_warnings),
 warnings_as_errors(source.warnings_as_errors),
-unsafe(source.unsafe),
-optimisation_level(source.optimisation_level),
+prolog_safe(source.prolog_safe),
+logarithmic_c(source.logarithmic_c),
+share_c(source.share_c),
+share_r(source.share_r),
+share_s(source.share_s),
+skip_i(source.skip_i),
+skip_b(source.skip_b),
+skip_c(source.skip_c),
 output_name(source.output_name){
 }
 
@@ -109,8 +159,14 @@ options& options::operator=(const options& source){
     optimise_domain = source.optimise_domain;
     show_warnings = source.show_warnings;
     warnings_as_errors = source.warnings_as_errors;
-    unsafe = source.unsafe;
-    optimisation_level = source.optimisation_level;
+    prolog_safe = source.prolog_safe;
+    logarithmic_c = source.logarithmic_c;
+    share_c = source.share_c;
+    share_r = source.share_r;
+    share_s = source.share_s;
+    skip_i = source.skip_i;
+    skip_b = source.skip_b;
+    skip_c = source.skip_c;
     output_name = source.output_name;
     return *this;
 }
@@ -120,8 +176,14 @@ just_verify(source.just_verify),
 optimise_domain(source.optimise_domain),
 show_warnings(source.show_warnings),
 warnings_as_errors(source.warnings_as_errors),
-unsafe(source.unsafe),
-optimisation_level(source.optimisation_level),
+prolog_safe(source.prolog_safe),
+logarithmic_c(source.logarithmic_c),
+share_c(source.share_c),
+share_r(source.share_r),
+share_s(source.share_s),
+skip_i(source.skip_i),
+skip_b(source.skip_b),
+skip_c(source.skip_c),
 output_name(std::move(source.output_name)){
 }
 
@@ -132,8 +194,14 @@ options& options::operator=(options&& source){
     optimise_domain = source.optimise_domain;
     show_warnings = source.show_warnings;
     warnings_as_errors = source.warnings_as_errors;
-    unsafe = source.unsafe;
-    optimisation_level = source.optimisation_level;
+    prolog_safe = source.prolog_safe;
+    logarithmic_c = source.logarithmic_c;
+    share_c = source.share_c;
+    share_r = source.share_r;
+    share_s = source.share_s;
+    skip_i = source.skip_i;
+    skip_b = source.skip_b;
+    skip_c = source.skip_c;
     output_name = std::move(source.output_name);
     return *this;
 }
@@ -157,11 +225,33 @@ bool options::escalating_warnings(void)const{
 }
 
 bool options::allowed_unsafe(void)const{
-    return unsafe;
+    return !prolog_safe;
 }
 
-uint options::optimising(void)const{
-    return optimisation_level;
+bool options::logarithmic_counter(void)const{
+    return logarithmic_c;
+}
+
+bool options::share_concatenations(void)const{
+    return share_c;
+}
+
+bool options::share_repetitions(void)const{
+    return share_r;
+}
+
+bool options::share_sums(void)const{
+    return share_s;
+}
+
+bool options::skip_input(void)const{
+    return skip_i;
+}
+bool options::skip_base(void)const{
+    return skip_b;
+}
+bool options::skip_comments(void)const{
+    return skip_c;
 }
 
 const std::string& options::output_file(void)const{

@@ -42,6 +42,10 @@ const char* board_parse_error::what(void)const noexcept{
     return ("Board parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description).c_str();
 }
 
+std::string board_parse_error::to_string(void)const{
+    return "Board parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description;
+}
+
 board::board(uint w, uint h):
 width(w),
 fields(h, std::vector<std::pair<bool, char>>(w, std::make_pair(false,'.'))){
@@ -91,8 +95,8 @@ std::pair<board, std::unordered_set<char>> parse_board(
     parser& p,
     std::vector<warning>& warnings_list)throw(board_parse_error){
     std::unordered_set<char> pieces_set;
-    if(!p.expect_string("<--BOARD-->"))
-        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Board segment must begin with \'<--BOARD-->\' string");
+    if(!p.expect_string("<BOARD>"))
+        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Board segment must begin with \'<BOARD>\' string");
     p.expect_whitespace();
     parser_result<int> width_result = p.expect_int();
     if(!width_result)
@@ -111,6 +115,9 @@ std::pair<board, std::unordered_set<char>> parse_board(
     std::vector<uint> expected_fields_alignment(result.width);
     char next_char;
     uint line_number = p.get_line_number();
+    if(!p.expect_plain_char('|'))
+        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Every row should begin with \'|\'");
+    p.expect_whitespace();
     for(uint i=0;i<result.width;++i){
         next_char = p.expect_plain_char();
         if(next_char!='.'){
@@ -127,8 +134,15 @@ std::pair<board, std::unordered_set<char>> parse_board(
         expected_fields_alignment[i] = p.get_char_in_line_number();
         p.expect_whitespace();
     }
+    if(!p.expect_plain_char('|'))
+        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Every row should end with \'|\'");
+    p.expect_whitespace();
     for(uint i=1;i<result.fields.size();++i){
+        if(!p.expect_plain_char('|'))
+            throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Every row should begin with \'|\'");
+        p.expect_whitespace();
         line_number = p.get_line_number();
+        bool wrong_placement_reported = false;
         for(uint j=0;j<result.width;++j){
             next_char = p.expect_plain_char();
             if(next_char!='.'){
@@ -140,12 +154,19 @@ std::pair<board, std::unordered_set<char>> parse_board(
                     throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected \'.\' or letter");
                 pieces_set.insert(toupper(next_char));
             }
-            if(p.get_line_number()!=line_number)
-                 warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong line"));
-            if(p.get_char_in_line_number()!=expected_fields_alignment[j])
-                 warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong column"));
+            if(p.get_line_number()!=line_number && !wrong_placement_reported){
+                warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong line"));
+                wrong_placement_reported = true;
+            }
+            if(p.get_char_in_line_number()!=expected_fields_alignment[j] && !wrong_placement_reported){
+                warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "This character is in wrong column"));
+                wrong_placement_reported = true;
+            }
             p.expect_whitespace();
         }
+        if(!p.expect_plain_char('|'))
+            throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Every row should end with \'|\'");
+        p.expect_whitespace();
     }
     return std::make_pair(std::move(result), std::move(pieces_set));
 }

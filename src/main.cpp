@@ -16,7 +16,16 @@ int main(int argc, const char** argv){
         std::cerr<<"\"-v\" - just verify input; do not generate output file"<<std::endl;
         std::cerr<<"\"-Whide\" - do not show warnings"<<std::endl;
         std::cerr<<"\"-Werror\" - treat warnings as errors"<<std::endl;
-        std::cerr<<"\"-unsafe\" - generated code does not strictly follows GDL standard but can be faster on some reasoners"<<std::endl;
+        std::cerr<<"\"-prolog-safe\" - generated code is reasonable for prolog players; defaults to false"<<std::endl;
+        std::cerr<<"\"-flinear-turn-counter\" - implement turn counter using linear number of rules; defaults to false"<<std::endl;
+        std::cerr<<"\"-fshare-concatenations\" - do not implement the same moves concatenation for every piece separately; defaults to false"<<std::endl;
+        std::cerr<<"\"-fshare-repetitions\" - do not implement the same moves repetition (^number, ^*) for every piece separately; defaults to false"<<std::endl;
+        std::cerr<<"\"-fshare-sums\" - do not implement the same moves sum for every piece separately; defaults to false"<<std::endl;
+        std::cerr<<"\"-skip-input\" - do not generate input segment; defaults to false"<<std::endl;
+        std::cerr<<"\"-skip-base\" - do not generate base segment; defaults to false"<<std::endl;
+        std::cerr<<"\"-skip-comments\" - do not generate comments; defaults to false"<<std::endl;
+        std::cerr<<"\"-O0\" - alias for \"-prolog-safe -flinear-turn-counter\""<<std::endl;
+        std::cerr<<"\"-O1\" - alias for \"-fshare-concatenations -fshare-repetitions -fshare-sums\""<<std::endl;
     }
     else{
         try{
@@ -34,7 +43,10 @@ int main(int argc, const char** argv){
                 std::cout<<"Produced "<<o.output_file()<<std::endl;
             }
         }
-        catch(std::exception& e){
+        catch(parse_error& e){
+            std::cerr<<e.to_string()<<std::endl;
+        }
+        catch(wrong_argument_error& e){
             std::cerr<<e.what()<<std::endl;
         }
     }

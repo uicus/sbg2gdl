@@ -42,6 +42,10 @@ const char* piece_parse_error::what(void)const noexcept{
     return ("Piece parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description).c_str();
 }
 
+std::string piece_parse_error::to_string(void)const{
+    return "Piece parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description;
+}
+
 piece::piece(char s, move&& pattern):
 symbol(s),
 move_pattern(std::move(pattern)){
@@ -86,8 +90,8 @@ std::vector<piece> parse_pieces(
     const std::unordered_set<char>& declared_pieces)throw(piece_parse_error){
     std::vector<piece> result;
     std::unordered_set<char> parsed_pieces;
-    if(!p.expect_string("<--PIECES-->"))
-        throw piece_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Pieces segment must begin with \'<--PIECES-->\' string");
+    if(!p.expect_string("<PIECES>"))
+        throw piece_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Pieces segment must begin with \'<PIECES>\' string");
     p.expect_whitespace();
     char next_char;
     bool ignore;
@@ -131,15 +135,13 @@ void piece::scan(reuse_tool& known)const{
     move_pattern.scan_for_concatenations(known);
 }
 
-#include<iostream>
-
 void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves, const options& o)const{
     std::vector<std::pair<uint, move>> additional_moves;
     std::vector<std::pair<uint, bracketed_move>> additional_bracketed_moves;
     additional_moves.push_back(std::make_pair(0,move_pattern));
     const std::string legal_move_name = std::string("legal")+piece_name(symbol, uppercase)+"Move";
     out<<"(<= (legal "<<player_name(uppercase)<<" (move ?xin ?yin ?xout ?yout))";
-    out<<"\n\t(true (control "<<player_name(uppercase)<<"))";
+    out<<"\n\t(control "<<player_name(uppercase)<<")";
     out<<"\n\t(true (cell ?xin ?yin "<<piece_name(symbol, uppercase)<<"))";
     out<<"\n\t("<<legal_move_name<<"0 ?xin ?yin ?xout ?yout))\n\n";
     uint next_free_id = 1;

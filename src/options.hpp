@@ -25,8 +25,14 @@ class options{
         bool optimise_domain : 1;
         bool show_warnings : 1;
         bool warnings_as_errors : 1;
-        bool unsafe : 1;
-        uint optimisation_level : 2;
+        bool prolog_safe : 1;
+        bool logarithmic_c : 1;
+        bool share_c : 1;
+        bool share_r : 1;
+        bool share_s : 1;
+        bool skip_i : 1;
+        bool skip_b : 1;
+        bool skip_c : 1;
         std::string output_name;
     public:
         options(void);
@@ -42,7 +48,13 @@ class options{
         bool showing_warnings(void)const;
         bool escalating_warnings(void)const;
         bool allowed_unsafe(void)const;
-        uint optimising(void)const;
+        bool logarithmic_counter(void)const;
+        bool share_concatenations(void)const;
+        bool share_repetitions(void)const;
+        bool share_sums(void)const;
+        bool skip_input(void)const;
+        bool skip_base(void)const;
+        bool skip_comments(void)const;
         const std::string& output_file(void)const;
 };
 

@@ -27,7 +27,9 @@ class reuse_tool{
         std::map<moves_concatenation, uint> existing_concatenations;
         std::map<moves_concatenation, std::string> concatenations_to_add;
         std::map<moves_concatenation, std::string> known_concatenations;
-        uint next_id(void)const;
+        std::map<moves_sum, std::string> existing_subsums;
+        uint next_concatenation_id(void)const;
+        uint next_subsum_id(void)const;
     public:
         reuse_tool(void);
         reuse_tool(const reuse_tool& src);
@@ -39,7 +41,7 @@ class reuse_tool{
         void insert_new_concatenation(moves_concatenation&& src);
         void delete_singletons(void);
         bool there_are_new_concatenations(void)const;
-        std::pair<uint, uint> best_subconcatenation(const moves_concatenation& src, uint from, uint to, bool can_be_whole)const;
+        std::pair<uint, uint> best_subconcatenation(const moves_concatenation& src, bool can_be_whole)const;
         void write_all_concatenations(
             std::ofstream& out,
             std::vector<std::pair<uint, move>>& additional_moves_to_write,
@@ -48,6 +50,8 @@ class reuse_tool{
             const std::string& original_name,
             uint& next_free_id,
             const options& o);
+
+        void insert_subsum(const moves_sum& src, bool uppercase);
 
         std::string get_or_insert(const moves_concatenation& src, bool uppercase);
         std::string get_or_insert(
@@ -173,8 +177,6 @@ class moves_concatenation{
             const std::string& end_y_name,
             uint& next_free_id,
             const options& o,
-            uint from,
-            uint to,
             bool can_be_whole = true)const;
         void write_freestanding_predicate(
             std::ofstream& out,

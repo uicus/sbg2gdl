@@ -23,6 +23,7 @@ class parse_error : public std::exception{
         virtual ~parse_error(void);
 
         virtual const char* what(void)const noexcept;
+        virtual std::string to_string(void)const;
 };
 
 class warning{

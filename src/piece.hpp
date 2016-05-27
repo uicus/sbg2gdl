@@ -21,6 +21,7 @@ class piece_parse_error : public parse_error{
         virtual ~piece_parse_error(void);
 
         virtual const char* what(void)const noexcept;
+        virtual std::string to_string(void)const;
 };
 
 class piece{

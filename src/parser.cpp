@@ -85,8 +85,6 @@ bool parser::whitespace(void)const{
     return isspace(pointed_char());//pointed_char() == '\r' || pointed_char() == ' ' || pointed_char() == '\t' || end_of_line();
 }
 
-#include<iostream>
-
 char parser::get_next_char(void){
     char result;
     if(end_of_buffer() && input->eof())

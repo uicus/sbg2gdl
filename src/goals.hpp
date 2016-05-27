@@ -21,6 +21,7 @@ class goals_parse_error : public parse_error{
         virtual ~goals_parse_error(void);
 
         virtual const char* what(void)const noexcept;
+        virtual std::string to_string(void)const;
 };
 
 class goals{
@@ -38,8 +39,7 @@ class goals{
         void add_piece_capture_goal(char symbol, uint number_of_pieces);
 
         bool has_any_capture_goal(void)const;
-        void write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces, uint capture_limit)const;
-        void write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces, uint capture_limit)const;
+        void write_capture_detection(std::ofstream& out, bool capturing_lower_pieces, std::unordered_set<uint>& needed_at_least_predicates)const;
 
         bool has_any_breakthrough_goal(void)const;
         void write_breakthrough_detection(std::ofstream& out, bool uppercase)const;

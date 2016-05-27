@@ -26,14 +26,14 @@ class game{
             uint limit,
             goals&& u_goals,
             goals&& l_goals);
-        void write_steps_logic(std::ofstream& out)const;
+        void write_steps_logic(std::ofstream& out, const options& o)const;
         void write_arithmetic(std::ofstream& out, uint max_number)const;
-        void write_base(std::ofstream& out)const;
+        void write_base(std::ofstream& out, const options& o)const;
         void write_input(std::ofstream& out)const;
-        void write_initial_state(std::ofstream& out)const;
+        void write_initial_state(std::ofstream& out, const options& o)const;
         void write_pieces_definition(std::ofstream& out, const options& o)const;
-        void write_next_state_logic(std::ofstream& out)const;
-        void write_terminal_state(std::ofstream& out)const;
+        void write_next_state_logic(std::ofstream& out, const options& o)const;
+        void write_terminal_state(std::ofstream& out, const options& o)const;
         void write_goals(std::ofstream& out)const;
         void write_moves_succ(std::ofstream& out)const;
         uint max_number_of_repetitions(void)const;

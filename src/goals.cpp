@@ -42,6 +42,10 @@ const char* goals_parse_error::what(void)const noexcept{
     return ("Goals parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description).c_str();
 }
 
+std::string goals_parse_error::to_string(void)const{
+    return "Goals parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description;
+}
+
 goals::goals(void):
 piece_placement(),
 piece_capture(){
@@ -94,8 +98,8 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
     uint turns_limit;
     goals uppercase_player_goals;
     goals lowercase_player_goals;
-    if(!p.expect_string("<--GOALS-->"))
-        throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Goals segment must begin with \'<--GOALS-->\' string");
+    if(!p.expect_string("<GOALS>"))
+        throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Goals segment must begin with \'<GOALS>\' string");
     p.expect_whitespace();
     parser_result<int> turns_limit_result = p.expect_int();
     if(!turns_limit_result)
@@ -176,8 +180,8 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
             parser_result<int> number_of_pieces_result = p.expect_int();
             if(!number_of_pieces_result)
                 throw goals_parse_error(number_of_pieces_result.info.line_number, number_of_pieces_result.info.char_number, number_of_pieces_result.info.human_readable_info.c_str());
-            if(number_of_pieces_result.result < 1)
-                throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Number of piece captures must be positive");
+            if(number_of_pieces_result.result < 0)
+                throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Number of piece captures must be non negative");
             if(!ignore){
                 if(uppercase_player)
                     uppercase_player_goals.add_piece_capture_goal(next_char, number_of_pieces_result.result);
@@ -198,17 +202,12 @@ bool goals::has_any_capture_goal(void)const{
     return piece_capture.size() > 0;
 }
 
-void goals::write_piece_capture_counter(std::ofstream& out, bool capturing_lower_pieces, uint capture_limit)const{
-    for(const auto& el: piece_capture)
-        out<<"(captureCounterStep "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<number(0, capture_limit)<<' '<<number(1, capture_limit)<<")\n";
-    out<<'\n';
-    for(const auto& el: piece_capture)
-        out<<"(captureToWin "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<number(el.second, capture_limit)<<")\n";
-}
-
-void goals::write_initial_capture_states(std::ofstream& out, bool capturing_lower_pieces, uint capture_limit)const{
-    for(const auto& el: piece_capture)
-        out<<"(init (captureCounter "<<piece_name(el.first, !capturing_lower_pieces)<<' '<<number(0, capture_limit)<<"))\n";
+void goals::write_capture_detection(std::ofstream& out, bool capturing_lower_pieces, std::unordered_set<uint>& needed_at_least_predicates)const{
+    for(const auto& el: piece_capture){
+        out<<"(<= (capturedEnoughToWin "<<player_name(capturing_lower_pieces)<<")";
+        out<<"\n\t(not (existAtLeast"<<el.second+1<<' '<<piece_name(el.first, !capturing_lower_pieces)<<")))\n";
+        needed_at_least_predicates.insert(el.second+1);
+    }
 }
 
 bool goals::has_any_breakthrough_goal(void)const{
@@ -220,8 +219,8 @@ void goals::write_breakthrough_detection(std::ofstream& out, bool uppercase)cons
         out<<'\n';
         std::string correct_case = (uppercase ? "uppercase" : "lowercase");
         for(const auto& coords: el.second){
-            out<<"(<= (next "<<correct_case<<"BrokeThrough)";
-            out<<"\n\t(does "<<player_name(uppercase)<<" (move ?x ?y "<<coords.first<<' '<<coords.second<<"))\n\t(true (cell ?x ?y "<<piece_name(el.first, uppercase)<<")))\n";
+            out<<"(<= "<<correct_case<<"BrokeThrough";
+            out<<"\n\t(true (cell "<<coords.first<<' '<<coords.second<<' '<<piece_name(el.first, uppercase)<<")))\n";
         }
     }
 }

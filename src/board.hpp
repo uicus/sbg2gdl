@@ -20,6 +20,7 @@ class board_parse_error : public parse_error{
         virtual ~board_parse_error(void);
 
         virtual const char* what(void)const noexcept;
+        virtual std::string to_string(void)const;
 };
 
 class board{
