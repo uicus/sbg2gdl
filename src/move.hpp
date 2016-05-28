@@ -52,6 +52,12 @@ class reuse_tool{
             const options& o);
 
         void insert_subsum(const moves_sum& src, bool uppercase);
+        void write_all_subsums(std::ofstream& out, bool uppercase, const options& o);
+        std::set<moves_concatenation> use_subsums_to_write(
+            std::ofstream& out,
+            const std::set<moves_concatenation>& src,
+            const std::string& name,
+            bool can_be_whole)const;
 
         std::string get_or_insert(const moves_concatenation& src, bool uppercase);
         std::string get_or_insert(
@@ -106,6 +112,11 @@ class moves_sum{
 
         bool operator==(const moves_sum& m2)const;
         bool operator<(const moves_sum& m2)const;
+        uint length(void)const;
+
+        bool empty_intersection(const std::set<moves_concatenation>& y)const;
+        bool is_included_in(const std::set<moves_concatenation>& y)const;
+        void difference(std::set<moves_concatenation>& y)const;
 
         std::string to_string(void)const;
 
@@ -121,6 +132,7 @@ class moves_sum{
         uint max_number_of_repetitions(uint treat_star_as)const;
 
         void scan_for_concatenations(reuse_tool& known)const;
+        void scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const;
 
         void write_as_gdl(
             std::ofstream& out,
@@ -131,7 +143,8 @@ class moves_sum{
             uint current_id,
             bool uppercase_player,
             uint& next_free_id,
-            const options& o)const;
+            const options& o,
+            bool can_be_whole = true)const;
 };
 
 class moves_concatenation{
@@ -163,6 +176,7 @@ class moves_concatenation{
 
         moves_concatenation sub_move(uint begin, uint end)const;
         void scan_for_concatenations(reuse_tool& known)const;
+        void scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const;
 
         void write_as_gdl(
             std::ofstream& out,
@@ -223,6 +237,7 @@ class bracketed_move{
         uint max_number_of_repetitions(uint treat_star_as)const;
 
         void scan_for_concatenations(reuse_tool& known)const;
+        void scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const;
 
         void write_as_gdl(
             std::ofstream& out,

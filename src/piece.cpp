@@ -131,8 +131,12 @@ uint piece::max_number_of_repetitions(uint treat_star_as)const{
     return move_pattern.max_number_of_repetitions(treat_star_as);
 }
 
-void piece::scan(reuse_tool& known)const{
+void piece::scan_for_concatenations(reuse_tool& known)const{
     move_pattern.scan_for_concatenations(known);
+}
+
+void piece::scan_for_subsums(const piece& second, reuse_tool& known, bool uppercase)const{
+    move_pattern.scan_for_subsums(second.move_pattern, known, uppercase);
 }
 
 void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves, const options& o)const{

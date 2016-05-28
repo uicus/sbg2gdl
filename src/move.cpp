@@ -139,6 +139,68 @@ void reuse_tool::insert_subsum(const moves_sum& src, bool uppercase){
     }
 }
 
+void reuse_tool::write_all_subsums(std::ofstream& out, bool uppercase, const options& o){
+    for(const auto& el: existing_subsums){
+        std::vector<std::pair<uint, moves_sum>> additional_moves;
+        std::vector<std::pair<uint, bracketed_move>> additional_bracketed_moves;
+        additional_moves.push_back(std::make_pair(0,el.first));
+        uint next_free_id = 1;
+        while(!additional_moves.empty() || !additional_bracketed_moves.empty() || there_are_new_concatenations()){
+            while(!additional_moves.empty()){
+                std::pair<uint, move> move_to_write = additional_moves.back();
+                additional_moves.pop_back();
+                move_to_write.second.write_as_gdl(
+                    out,
+                    additional_moves,
+                    additional_bracketed_moves,
+                    *this,
+                    el.second,
+                    move_to_write.first,
+                    uppercase,
+                    next_free_id,
+                    o,
+                    false);
+            }
+            while(!additional_bracketed_moves.empty()){
+                std::pair<uint, bracketed_move> bracketed_move_to_write = additional_bracketed_moves.back();
+                additional_bracketed_moves.pop_back();
+                bracketed_move_to_write.second.write_freestanding_predicate(
+                    out,
+                    additional_moves,
+                    *this,
+                    el.second,
+                    bracketed_move_to_write.first,
+                    uppercase,
+                    next_free_id,
+                    o);
+            }
+            write_all_concatenations(
+                out,
+                additional_moves,
+                additional_bracketed_moves,
+                uppercase,
+                el.second,
+                next_free_id,
+                o);
+        }
+    }
+}
+
+std::set<moves_concatenation> reuse_tool::use_subsums_to_write(
+std::ofstream& out,
+const std::set<moves_concatenation>& src,
+const std::string& name,
+bool can_be_whole)const{
+    std::set<moves_concatenation> remaining_moves = src;
+    uint max_size = src.size() - (can_be_whole ? 0 : 1);
+    for(const auto& el: existing_subsums)
+        if(el.first.length() <= max_size && !el.first.empty_intersection(remaining_moves) && el.first.is_included_in(src)){
+            out<<"(<= ("<<name<<" ?xin ?yin ?xout ?yout)\n\t("<<el.second<<"0 ?xin ?yin ?xout ?yout))\n";
+            el.first.difference(remaining_moves);
+        }
+    return remaining_moves;
+}
+
 std::string reuse_tool::get_or_insert(const moves_concatenation& src, bool uppercase){
     const auto it = known_concatenations.find(src);
     if(it != known_concatenations.end())
@@ -323,6 +385,36 @@ bool moves_sum::operator<(const moves_sum& m2)const{
     return m.size()<m2.m.size();
 }
 
+uint moves_sum::length(void)const{
+    return m.size();
+}
+
+bool moves_sum::empty_intersection(const std::set<moves_concatenation>& y)const{
+    auto i = m.begin();
+    auto j = y.begin();
+    while (i != m.end() && j != y.end()){
+        if (*i == *j)
+            return false;
+        else if (*i < *j)
+            ++i;
+        else
+            ++j;
+    }
+    return true;
+}
+
+bool moves_sum::is_included_in(const std::set<moves_concatenation>& y)const{
+    return std::includes(y.begin(), y.end(), m.begin(), m.end());
+}
+
+void moves_sum::difference(std::set<moves_concatenation>& y)const{
+    for(const auto& el: m){
+        auto it = y.find(el);
+        if(it != y.end())
+            y.erase(it);
+    }
+}
+
 void moves_sum::wrap_in_brackets(void){
     moves_sum this_move;
     this_move.m = std::move(m);
@@ -433,6 +525,17 @@ void moves_sum::scan_for_concatenations(reuse_tool& known)const{
         el.scan_for_concatenations(known);
 }
 
+void moves_sum::scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const{
+    moves_sum intersection;
+    std::set_intersection(m.begin(), m.end(), second.m.begin(), second.m.end(), std::inserter(intersection.m,intersection.m.begin()));
+    if(intersection.m.size() > 1)
+        known.insert_subsum(intersection, uppercase);
+    for(const auto& el: second.m)
+        el.scan_for_subsums(*this, known, uppercase);
+    for(const auto& el: m)
+        el.scan_for_subsums(second, known, uppercase);
+}
+
 void moves_sum::write_as_gdl(
     std::ofstream& out,
     std::vector<std::pair<uint, move>>& additional_moves_to_write,
@@ -442,10 +545,12 @@ void moves_sum::write_as_gdl(
     uint current_id,
     bool uppercase_player,
     uint& next_free_id,
-    const options& o)const{
+    const options& o,
+    bool can_be_whole)const{
     if(!o.skip_comments())
         out<<"; "<<to_string()<<"\n\n";
-    for(const auto& el: m){
+    std::set<moves_concatenation> remaining_moves = known.use_subsums_to_write(out,m,move_name+std::to_string(current_id),can_be_whole);
+    for(const auto& el: remaining_moves){
         out<<"(<= ("<<move_name<<current_id<<" ?xin ?yin ?xout ?yout)";
         el.write_as_gdl(
             out,
@@ -604,6 +709,11 @@ void moves_concatenation::scan_for_concatenations(reuse_tool& known)const{
             known.insert_new_concatenation(sub_move(i,j));
     for(const auto& el: m)
         el.scan_for_concatenations(known);
+}
+
+void moves_concatenation::scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const{
+    for(const auto& el: m)
+        el.scan_for_subsums(second, known, uppercase);
 }
 
 void moves_concatenation::write_as_gdl(
@@ -893,6 +1003,11 @@ uint bracketed_move::max_number_of_repetitions(uint treat_star_as)const{
 void bracketed_move::scan_for_concatenations(reuse_tool& known)const{
     if(sum)
         m_sum->scan_for_concatenations(known);
+}
+
+void bracketed_move::scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const{
+    if(sum)
+        m_sum->scan_for_subsums(second, known, uppercase);
 }
 
 void bracketed_move::write_as_gdl(

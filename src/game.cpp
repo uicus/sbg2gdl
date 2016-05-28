@@ -153,11 +153,22 @@ void game::write_pieces_definition(std::ofstream& out, const options& o)const{
     reuse_tool known_lowercase_moves;
     if(o.share_concatenations()){
         for(const auto& el: piece_moves){
-            el.scan(known_uppercase_moves);
-            el.scan(known_lowercase_moves);
+            el.scan_for_concatenations(known_uppercase_moves);
+            el.scan_for_concatenations(known_lowercase_moves);
         }
         known_uppercase_moves.delete_singletons();
         known_lowercase_moves.delete_singletons();
+    }
+    if(o.share_sums()){
+        auto almost_end = piece_moves.end();
+        --almost_end;
+        for(auto i=piece_moves.begin();i!=almost_end;++i)
+            for(auto j=i+1;j!=piece_moves.end();++j){
+                i->scan_for_subsums(*j, known_uppercase_moves, true);
+                i->scan_for_subsums(*j, known_lowercase_moves, false);
+            }
+        known_uppercase_moves.write_all_subsums(out, true, o);
+        known_lowercase_moves.write_all_subsums(out, false, o);
     }
     for(const auto& el: piece_moves){
         el.write_as_gdl(out,true, known_uppercase_moves, o);
