@@ -9,32 +9,6 @@ goals_parse_error::goals_parse_error(uint line, uint character, const std::strin
 parse_error(line, character, source){
 }
 
-goals_parse_error::goals_parse_error(const goals_parse_error& source):
-parse_error(source){
-}
-
-goals_parse_error& goals_parse_error::operator=(const goals_parse_error& source){
-    if(this == &source)
-        return *this;
-    line_number = source.line_number;
-    char_number = source.char_number;
-    description = source.description;
-    return *this;
-}
-
-goals_parse_error::goals_parse_error(goals_parse_error&& source):
-parse_error(std::move(source)){
-}
-
-goals_parse_error& goals_parse_error::operator=(goals_parse_error&& source){
-    if(this == &source)
-        return *this;
-    line_number = source.line_number;
-    char_number = source.char_number;
-    description = std::move(source.description);
-    return *this;
-}
-
 goals_parse_error::~goals_parse_error(void){
 }
 
@@ -49,35 +23,6 @@ std::string goals_parse_error::to_string(void)const{
 goals::goals(void):
 piece_placement(),
 piece_capture(){
-}
-
-goals::goals(const goals& src):
-piece_placement(src.piece_placement),
-piece_capture(src.piece_capture){
-}
-
-goals& goals::operator=(const goals& src){
-    if(this == &src)
-        return *this;
-    piece_placement = src.piece_placement;
-    piece_capture = src.piece_capture;
-    return *this;
-}
-
-goals::goals(goals&& src):
-piece_placement(std::move(src.piece_placement)),
-piece_capture(std::move(src.piece_capture)){
-}
-
-goals& goals::operator=(goals&& src){
-    if(this == &src)
-        return *this;
-    piece_placement = std::move(src.piece_placement);
-    piece_capture = std::move(src.piece_capture);
-    return *this;
-}
-
-goals::~goals(void){
 }
 
 void goals::add_piece_placement_goal(char symbol, uint x, uint y){

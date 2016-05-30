@@ -19,53 +19,6 @@ uppercase_player_goals(std::move(u_goals)),
 lowercase_player_goals(std::move(l_goals)){
 }
 
-game::game(const game& src):
-name(src.name),
-brd(src.brd),
-piece_moves(src.piece_moves),
-turns_limit(src.turns_limit),
-uppercase_player_goals(src.uppercase_player_goals),
-lowercase_player_goals(src.lowercase_player_goals){
-}
-
-game& game::operator=(const game& src){
-    if(this == &src)
-        return *this;
-    name = src.name;
-    brd = src.brd;
-    piece_moves = src.piece_moves;
-    turns_limit = src.turns_limit;
-    uppercase_player_goals = src.uppercase_player_goals;
-    lowercase_player_goals = src.lowercase_player_goals;
-    return *this;
-}
-
-game::game(game&& src):
-name(std::move(src.name)),
-brd(std::move(src.brd)),
-piece_moves(std::move(src.piece_moves)),
-turns_limit(src.turns_limit),
-uppercase_player_goals(std::move(src.uppercase_player_goals)),
-lowercase_player_goals(std::move(src.lowercase_player_goals)){
-}
-
-game& game::operator=(game&& src){
-    if(this == &src)
-        return *this;
-    name = std::move(src.name);
-    brd = std::move(src.brd);
-    piece_moves = std::move(src.piece_moves);
-    turns_limit = src.turns_limit;
-    uppercase_player_goals = std::move(src.uppercase_player_goals);
-    lowercase_player_goals = std::move(src.lowercase_player_goals);
-    return *this;
-}
-
-game::~game(void){
-}
-
-#include<iostream>
-
 game parse_game(const std::string& file_name, std::vector<warning>& warnings_list)throw(parse_error){
     std::ifstream input_file(file_name);
     if(!input_file.good())

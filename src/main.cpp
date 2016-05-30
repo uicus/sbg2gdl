@@ -24,8 +24,7 @@ int main(int argc, const char** argv){
         std::cerr<<"\"-skip-input\" - do not generate input segment; defaults to false"<<std::endl;
         std::cerr<<"\"-skip-base\" - do not generate base segment; defaults to false"<<std::endl;
         std::cerr<<"\"-skip-comments\" - do not generate comments; defaults to false"<<std::endl;
-        std::cerr<<"\"-O0\" - alias for \"-prolog-safe -flinear-turn-counter\""<<std::endl;
-        std::cerr<<"\"-O1\" - alias for \"-fshare-concatenations -fshare-repetitions -fshare-sums\""<<std::endl;
+        std::cerr<<"\"-O\" - alias for \"-fshare-concatenations -fshare-repetitions -fshare-sums\""<<std::endl;
     }
     else{
         try{

@@ -11,10 +11,6 @@ class wrong_argument_error : public std::exception{
     public:
         wrong_argument_error(void);
         wrong_argument_error(const std::string& description);
-        wrong_argument_error(const wrong_argument_error& source);
-        wrong_argument_error& operator=(const wrong_argument_error& source);
-        wrong_argument_error(wrong_argument_error&& source);
-        wrong_argument_error& operator=(wrong_argument_error&& source);
         virtual ~wrong_argument_error(void);
 
         virtual const char* what(void)const noexcept;
@@ -37,11 +33,6 @@ class options{
     public:
         options(void);
         options(uint number_of_args, const char** args)throw(wrong_argument_error);
-        options(const options& source);
-        options& operator=(const options& source);
-        options(options&& source);
-        options& operator=(options&& source);
-        ~options(void);
 
         bool verifying(void)const;
         bool domain_optimising(void)const;

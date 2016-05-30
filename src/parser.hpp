@@ -55,9 +55,6 @@ class parser{
         parser(void)=delete;
         parser(const parser&)=delete;
         parser& operator=(const parser&)=delete;
-        parser(parser&& src);
-        parser& operator=(parser&& src);
-        ~parser(void);
 
         uint get_line_number(void)const;
         uint get_char_in_line_number(void)const;

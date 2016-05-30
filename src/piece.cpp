@@ -9,32 +9,6 @@ piece_parse_error::piece_parse_error(uint line, uint character, const std::strin
 parse_error(line, character, source){
 }
 
-piece_parse_error::piece_parse_error(const piece_parse_error& source):
-parse_error(source){
-}
-
-piece_parse_error& piece_parse_error::operator=(const piece_parse_error& source){
-    if(this == &source)
-        return *this;
-    line_number = source.line_number;
-    char_number = source.char_number;
-    description = source.description;
-    return *this;
-}
-
-piece_parse_error::piece_parse_error(piece_parse_error&& source):
-parse_error(std::move(source)){
-}
-
-piece_parse_error& piece_parse_error::operator=(piece_parse_error&& source){
-    if(this == &source)
-        return *this;
-    line_number = source.line_number;
-    char_number = source.char_number;
-    description = std::move(source.description);
-    return *this;
-}
-
 piece_parse_error::~piece_parse_error(void){
 }
 
@@ -49,35 +23,6 @@ std::string piece_parse_error::to_string(void)const{
 piece::piece(char s, move&& pattern):
 symbol(s),
 move_pattern(std::move(pattern)){
-}
-
-piece::piece(const piece& src):
-symbol(src.symbol),
-move_pattern(src.move_pattern){
-}
-
-piece& piece::operator=(const piece& src){
-    if(this == &src)
-        return *this;
-    symbol = src.symbol;
-    move_pattern = src.move_pattern;
-    return *this;
-}
-
-piece::piece(piece&& src):
-symbol(src.symbol),
-move_pattern(std::move(src.move_pattern)){
-}
-
-piece& piece::operator=(piece&& src){
-    if(this == &src)
-        return *this;
-    symbol = src.symbol;
-    move_pattern = std::move(src.move_pattern);
-    return *this;
-}
-
-piece::~piece(void){
 }
 
 char piece::get_symbol(void)const{

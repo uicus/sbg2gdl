@@ -12,28 +12,6 @@ std::exception(),
 description(source){
 }
 
-wrong_argument_error::wrong_argument_error(const wrong_argument_error& source):
-std::exception(),
-description(source.description){
-}
-
-wrong_argument_error& wrong_argument_error::operator=(const wrong_argument_error& source){
-    description = source.description;
-    return *this;
-}
-
-wrong_argument_error::wrong_argument_error(wrong_argument_error&& source):
-std::exception(),
-description(std::move(source.description)){
-}
-
-wrong_argument_error& wrong_argument_error::operator=(wrong_argument_error&& source){
-    if(this == &source)
-        return *this;
-    description = std::move(source.description);
-    return *this;
-}
-
 wrong_argument_error::~wrong_argument_error(void){
 }
 
@@ -86,29 +64,12 @@ output_name("a.gdl"){
             }
             else if(!std::strcmp(args[i], "-Odomain"))
                 optimise_domain = true;
-            else if(args[i][1] == 'O'){
-                if(args[i][2] < '0' || args[i][2] > '3' || args[i][3] != '\0')
-                    throw wrong_argument_error("Unsupported optimisation level");
-                else{
-                    uint optimisation_level = args[i][2] - '0';
-                    switch(optimisation_level){
-                    case 0:
-                        prolog_safe = true;
-                        logarithmic_c = false;
-                        share_c = false;
-                        share_r = false;
-                        share_s = false;
-                        break;
-                    case 1:
-                    default:
-                        prolog_safe = false;
-                        logarithmic_c = true;
-                        share_c = true;
-                        share_r = true;
-                        share_s = true;
-                        break;
-                    }
-                }
+            else if(!std::strcmp(args[i], "-O")){
+                prolog_safe = false;
+                logarithmic_c = true;
+                share_c = true;
+                share_r = true;
+                share_s = true;
             }
             else if(!std::strcmp(args[i], "-Whide"))
                 show_warnings = false;
@@ -134,79 +95,6 @@ output_name("a.gdl"){
                 throw wrong_argument_error("Unrecognized flag");
         }
     }
-}
-
-options::options(const options& source):
-just_verify(source.just_verify),
-optimise_domain(source.optimise_domain),
-show_warnings(source.show_warnings),
-warnings_as_errors(source.warnings_as_errors),
-prolog_safe(source.prolog_safe),
-logarithmic_c(source.logarithmic_c),
-share_c(source.share_c),
-share_r(source.share_r),
-share_s(source.share_s),
-skip_i(source.skip_i),
-skip_b(source.skip_b),
-skip_c(source.skip_c),
-output_name(source.output_name){
-}
-
-options& options::operator=(const options& source){
-    if(this == &source)
-        return *this;
-    just_verify = source.just_verify;
-    optimise_domain = source.optimise_domain;
-    show_warnings = source.show_warnings;
-    warnings_as_errors = source.warnings_as_errors;
-    prolog_safe = source.prolog_safe;
-    logarithmic_c = source.logarithmic_c;
-    share_c = source.share_c;
-    share_r = source.share_r;
-    share_s = source.share_s;
-    skip_i = source.skip_i;
-    skip_b = source.skip_b;
-    skip_c = source.skip_c;
-    output_name = source.output_name;
-    return *this;
-}
-
-options::options(options&& source):
-just_verify(source.just_verify),
-optimise_domain(source.optimise_domain),
-show_warnings(source.show_warnings),
-warnings_as_errors(source.warnings_as_errors),
-prolog_safe(source.prolog_safe),
-logarithmic_c(source.logarithmic_c),
-share_c(source.share_c),
-share_r(source.share_r),
-share_s(source.share_s),
-skip_i(source.skip_i),
-skip_b(source.skip_b),
-skip_c(source.skip_c),
-output_name(std::move(source.output_name)){
-}
-
-options& options::operator=(options&& source){
-    if(this == &source)
-        return *this;
-    just_verify = source.just_verify;
-    optimise_domain = source.optimise_domain;
-    show_warnings = source.show_warnings;
-    warnings_as_errors = source.warnings_as_errors;
-    prolog_safe = source.prolog_safe;
-    logarithmic_c = source.logarithmic_c;
-    share_c = source.share_c;
-    share_r = source.share_r;
-    share_s = source.share_s;
-    skip_i = source.skip_i;
-    skip_b = source.skip_b;
-    skip_c = source.skip_c;
-    output_name = std::move(source.output_name);
-    return *this;
-}
-
-options::~options(void){
 }
 
 bool options::verifying(void)const{

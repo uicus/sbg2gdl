@@ -13,10 +13,6 @@ class board_parse_error : public parse_error{
     public:
         board_parse_error(void);
         board_parse_error(uint line, uint character, const std::string& description);
-        board_parse_error(const board_parse_error& source);
-        board_parse_error& operator=(const board_parse_error& source);
-        board_parse_error(board_parse_error&& source);
-        board_parse_error& operator=(board_parse_error&& source);
         virtual ~board_parse_error(void);
 
         virtual const char* what(void)const noexcept;
@@ -28,11 +24,7 @@ class board{
         std::vector<std::vector<std::pair<bool, char>>> fields; // false -> "lowercase" player, true -> "uppercase" player
         board(uint w, uint h);
     public:
-        board(const board& src);
-        board& operator=(const board& src);
-        board(board&& src);
-        board& operator=(board&& src);
-        ~board(void);
+        board(void)=delete;
 
         bool inside(uint x, uint y)const;
         uint get_width(void)const;

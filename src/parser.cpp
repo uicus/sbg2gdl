@@ -12,26 +12,6 @@ line_starts(){
     number_of_chars_in_line = 0;
 }
 
-parser::parser(parser&& src):
-input(src.input),
-buffer(std::move(src.buffer)),
-number_of_chars_in_line(src.number_of_chars_in_line),
-line_starts(std::move(src.line_starts)){
-}
-
-parser& parser::operator=(parser&& src){
-    if(this == &src)
-        return *this;
-    input = src.input;
-    buffer = std::move(src.buffer);
-    number_of_chars_in_line = src.number_of_chars_in_line;
-    line_starts = std::move(src.line_starts);
-    return *this;
-}
-
-parser::~parser(void){
-}
-
 parser::fallback_point parser::save_fallback_point(void)const{
     fallback_point fbp;
     fbp.line_number = get_line_number();

@@ -32,11 +32,6 @@ class reuse_tool{
         uint next_subsum_id(void)const;
     public:
         reuse_tool(void);
-        reuse_tool(const reuse_tool& src);
-        reuse_tool& operator=(const reuse_tool& src);
-        reuse_tool(reuse_tool&& src);
-        reuse_tool& operator=(reuse_tool&& src);
-        ~reuse_tool(void);
 
         void insert_new_concatenation(moves_concatenation&& src);
         void delete_singletons(void);
@@ -79,11 +74,6 @@ class single_move{
     public:
         single_move(void);
         single_move(int x, int y, on o);
-        single_move(const single_move& src);
-        single_move& operator=(const single_move& src);
-        single_move(single_move&& src);
-        single_move& operator=(single_move&& src);
-        ~single_move(void);
 
         std::string to_string(void)const;
 
@@ -104,11 +94,6 @@ class moves_sum{
         void wrap_in_brackets(void);
     public:
         moves_sum(void);
-        moves_sum(const moves_sum& src);
-        moves_sum& operator=(const moves_sum& src);
-        moves_sum(moves_sum&& src);
-        moves_sum& operator=(moves_sum&& src);
-        ~moves_sum(void);
 
         bool operator==(const moves_sum& m2)const;
         bool operator<(const moves_sum& m2)const;
@@ -152,11 +137,6 @@ class moves_concatenation{
         void wrap_in_brackets(void);
     public:
         moves_concatenation(void);
-        moves_concatenation(const moves_concatenation& src);
-        moves_concatenation& operator=(const moves_concatenation& src);
-        moves_concatenation(moves_concatenation&& src);
-        moves_concatenation& operator=(moves_concatenation&& src);
-        ~moves_concatenation(void);
 
         bool operator==(const moves_concatenation& m2)const;
         bool operator<(const moves_concatenation& m2)const;

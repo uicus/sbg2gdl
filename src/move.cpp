@@ -12,51 +12,6 @@ known_concatenations(),
 existing_subsums(){
 }
 
-reuse_tool::reuse_tool(const reuse_tool& src):
-known_sums(src.known_sums),
-known_bracketed(src.known_bracketed),
-existing_concatenations(src.existing_concatenations),
-concatenations_to_add(src.concatenations_to_add),
-known_concatenations(src.known_concatenations),
-existing_subsums(src.existing_subsums){
-}
-
-reuse_tool& reuse_tool::operator=(const reuse_tool& src){
-    if(this == &src)
-        return *this;
-    known_sums = src.known_sums;
-    known_bracketed = src.known_bracketed;
-    existing_concatenations = src.existing_concatenations;
-    concatenations_to_add = src.concatenations_to_add;
-    known_concatenations = src.known_concatenations;
-    existing_subsums = src.existing_subsums;
-    return *this;
-}
-
-reuse_tool::reuse_tool(reuse_tool&& src):
-known_sums(std::move(src.known_sums)),
-known_bracketed(std::move(src.known_bracketed)),
-existing_concatenations(std::move(src.existing_concatenations)),
-concatenations_to_add(std::move(src.concatenations_to_add)),
-known_concatenations(std::move(src.known_concatenations)),
-existing_subsums(std::move(src.existing_subsums)){
-}
-
-reuse_tool& reuse_tool::operator=(reuse_tool&& src){
-    if(this == &src)
-        return *this;
-    known_sums = std::move(src.known_sums);
-    known_bracketed = std::move(src.known_bracketed);
-    existing_concatenations = std::move(src.existing_concatenations);
-    concatenations_to_add = std::move(src.concatenations_to_add);
-    known_concatenations = std::move(src.known_concatenations);
-    existing_subsums = std::move(src.existing_subsums);
-    return *this;
-}
-
-reuse_tool::~reuse_tool(void){
-}
-
 uint reuse_tool::next_concatenation_id(void)const{
     return concatenations_to_add.size()+known_concatenations.size();
 }
@@ -261,39 +216,6 @@ y_delta(y),
 kind(o){
 }
 
-single_move::~single_move(void){
-}
-
-single_move::single_move(const single_move& src):
-x_delta(src.x_delta),
-y_delta(src.y_delta),
-kind(src.kind){
-}
-
-single_move& single_move::operator=(const single_move& src){
-    if(this == &src)
-        return *this;
-    x_delta = src.x_delta;
-    y_delta = src.y_delta;
-    kind = src.kind;
-    return *this;
-}
-
-single_move::single_move(single_move&& src):
-x_delta(src.x_delta),
-y_delta(src.y_delta),
-kind(src.kind){
-}
-
-single_move& single_move::operator=(single_move&& src){
-    if(this == &src)
-        return *this;
-    x_delta = src.x_delta;
-    y_delta = src.y_delta;
-    kind = src.kind;
-    return *this;
-}
-
 bool single_move::operator==(const single_move& m2)const{
     return x_delta == m2.x_delta && y_delta == m2.y_delta && kind == m2.kind;
 }
@@ -337,31 +259,6 @@ void single_move::write_as_gdl(
 
 moves_sum::moves_sum(void):
 m(){
-}
-
-moves_sum::moves_sum(const moves_sum& src):
-m(src.m){
-}
-
-moves_sum& moves_sum::operator=(const moves_sum& src){
-    if(this == &src)
-        return *this;
-    m = src.m;
-    return *this;
-}
-
-moves_sum::moves_sum(moves_sum&& src):
-m(std::move(src.m)){
-}
-
-moves_sum& moves_sum::operator=(moves_sum&& src){
-    if(this == &src)
-        return *this;
-    m = std::move(src.m);
-    return *this;
-}
-
-moves_sum::~moves_sum(void){
 }
 
 bool moves_sum::operator==(const moves_sum& m2)const{
@@ -571,31 +468,6 @@ void moves_sum::write_as_gdl(
 
 moves_concatenation::moves_concatenation(void):
 m(){
-}
-
-moves_concatenation::moves_concatenation(const moves_concatenation& src):
-m(src.m){
-}
-
-moves_concatenation& moves_concatenation::operator=(const moves_concatenation& src){
-    if(this == &src)
-        return *this;
-    m = src.m;
-    return *this;
-}
-
-moves_concatenation::moves_concatenation(moves_concatenation&& src):
-m(std::move(src.m)){
-}
-
-moves_concatenation& moves_concatenation::operator=(moves_concatenation&& src){
-    if(this == &src)
-        return *this;
-    m = std::move(src.m);
-    return *this;
-}
-
-moves_concatenation::~moves_concatenation(void){
 }
 
 bool moves_concatenation::operator==(const moves_concatenation& m2)const{

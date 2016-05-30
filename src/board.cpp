@@ -9,32 +9,6 @@ board_parse_error::board_parse_error(uint line, uint character, const std::strin
 parse_error(line, character, source){
 }
 
-board_parse_error::board_parse_error(const board_parse_error& source):
-parse_error(source){
-}
-
-board_parse_error& board_parse_error::operator=(const board_parse_error& source){
-    if(this == &source)
-        return *this;
-    line_number = source.line_number;
-    char_number = source.char_number;
-    description = source.description;
-    return *this;
-}
-
-board_parse_error::board_parse_error(board_parse_error&& source):
-parse_error(std::move(source)){
-}
-
-board_parse_error& board_parse_error::operator=(board_parse_error&& source){
-    if(this == &source)
-        return *this;
-    line_number = source.line_number;
-    char_number = source.char_number;
-    description = std::move(source.description);
-    return *this;
-}
-
 board_parse_error::~board_parse_error(void){
 }
 
@@ -49,35 +23,6 @@ std::string board_parse_error::to_string(void)const{
 board::board(uint w, uint h):
 width(w),
 fields(h, std::vector<std::pair<bool, char>>(w, std::make_pair(false,'.'))){
-}
-
-board::board(const board& src):
-width(src.width),
-fields(src.fields){
-}
-
-board& board::operator=(const board& src){
-    if(this == &src)
-        return *this;
-    width = src.width;
-    fields = src.fields;
-    return *this;
-}
-
-board::board(board&& src):
-width(src.width),
-fields(std::move(src.fields)){
-}
-
-board& board::operator=(board&& src){
-    if(this == &src)
-        return *this;
-    width = src.width;
-    fields = std::move(src.fields);
-    return *this;
-}
-
-board::~board(void){
 }
 
 bool board::inside(uint x, uint y)const{

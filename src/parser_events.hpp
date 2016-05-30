@@ -16,10 +16,6 @@ class parse_error : public std::exception{
         //parse_error(void);
         parse_error(const std::string& source);
         parse_error(uint line, uint character, const std::string& description);
-        parse_error(const parse_error& source);
-        parse_error& operator=(const parse_error& source);
-        parse_error(parse_error&& source);
-        parse_error& operator=(parse_error&& source);
         virtual ~parse_error(void);
 
         virtual const char* what(void)const noexcept;
@@ -32,11 +28,6 @@ class warning{
         std::string description;
     public:
         warning(uint line, uint column, const std::string& src);
-        warning(const warning& src);
-        warning& operator=(const warning& src);
-        warning(warning&& src);
-        warning& operator=(warning&& src);
-        ~warning(void);
 
         std::string to_string(bool as_error)const;
 };

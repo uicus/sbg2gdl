@@ -38,11 +38,7 @@ class game{
         void write_moves_succ(std::ofstream& out)const;
         uint max_number_of_repetitions(void)const;
     public:
-        game(const game& src);
-        game& operator=(const game& src);
-        game(game&& src);
-        game& operator=(game&& src);
-        ~game(void);
+        game(void)=delete;
 
         friend game parse_game(const std::string& file_name, std::vector<warning>& warnings_list)throw(parse_error);
 
