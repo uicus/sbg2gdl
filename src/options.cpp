@@ -26,9 +26,9 @@ show_warnings(true),
 warnings_as_errors(false),
 prolog_safe(false),
 logarithmic_c(true),
-share_c(false),
-share_r(false),
-share_s(false),
+share_c(true),
+share_r(true),
+share_s(true),
 skip_i(false),
 skip_b(false),
 skip_c(false),
@@ -64,13 +64,6 @@ output_name("a.gdl"){
             }
             else if(!std::strcmp(args[i], "-Odomain"))
                 optimise_domain = true;
-            else if(!std::strcmp(args[i], "-O")){
-                prolog_safe = false;
-                logarithmic_c = true;
-                share_c = true;
-                share_r = true;
-                share_s = true;
-            }
             else if(!std::strcmp(args[i], "-Whide"))
                 show_warnings = false;
             else if(!std::strcmp(args[i], "-Werror"))
@@ -85,12 +78,12 @@ output_name("a.gdl"){
                 prolog_safe = true;
             else if(!std::strcmp(args[i], "-flinear-turn-counter"))
                 logarithmic_c = false;
-            else if(!std::strcmp(args[i], "-fshare-concatenations"))
-                share_c = true;
-            else if(!std::strcmp(args[i], "-fshare-repetitions"))
-                share_r = true;
-            else if(!std::strcmp(args[i], "-fshare-sums"))
-                share_s = true;
+            else if(!std::strcmp(args[i], "-fno-share-concatenations"))
+                share_c = false;
+            else if(!std::strcmp(args[i], "-fno-share-repetitions"))
+                share_r = false;
+            else if(!std::strcmp(args[i], "-fno-share-sums"))
+                share_s = false;
             else
                 throw wrong_argument_error("Unrecognized flag");
         }

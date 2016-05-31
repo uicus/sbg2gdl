@@ -16,15 +16,14 @@ int main(int argc, const char** argv){
         std::cerr<<"\"-v\" - just verify input; do not generate output file"<<std::endl;
         std::cerr<<"\"-Whide\" - do not show warnings"<<std::endl;
         std::cerr<<"\"-Werror\" - treat warnings as errors"<<std::endl;
-        std::cerr<<"\"-prolog-safe\" - generated code is reasonable for prolog players; defaults to false"<<std::endl;
-        std::cerr<<"\"-flinear-turn-counter\" - implement turn counter using linear number of rules; defaults to false"<<std::endl;
-        std::cerr<<"\"-fshare-concatenations\" - do not implement the same moves concatenation for every piece separately; defaults to false"<<std::endl;
-        std::cerr<<"\"-fshare-repetitions\" - do not implement the same moves repetition (^number, ^*) for every piece separately; defaults to false"<<std::endl;
-        std::cerr<<"\"-fshare-sums\" - do not implement the same moves sum for every piece separately; defaults to false"<<std::endl;
-        std::cerr<<"\"-skip-input\" - do not generate input segment; defaults to false"<<std::endl;
-        std::cerr<<"\"-skip-base\" - do not generate base segment; defaults to false"<<std::endl;
-        std::cerr<<"\"-skip-comments\" - do not generate comments; defaults to false"<<std::endl;
-        std::cerr<<"\"-O\" - alias for \"-fshare-concatenations -fshare-repetitions -fshare-sums\""<<std::endl;
+        std::cerr<<"\"-prolog-safe\" - generated code is reasonable for prolog players"<<std::endl;
+        std::cerr<<"\"-flinear-turn-counter\" - implement turn counter using linear number of rules"<<std::endl;
+        std::cerr<<"\"-fno-share-concatenations\" - do not implement the same moves concatenation for every piece separately"<<std::endl;
+        std::cerr<<"\"-fno-share-repetitions\" - do not implement the same moves repetition (^number, ^*) for every piece separately"<<std::endl;
+        std::cerr<<"\"-fno-share-sums\" - do not implement the same moves sum for every piece separately"<<std::endl;
+        std::cerr<<"\"-skip-input\" - do not generate input segment"<<std::endl;
+        std::cerr<<"\"-skip-base\" - do not generate base segment"<<std::endl;
+        std::cerr<<"\"-skip-comments\" - do not generate comments"<<std::endl;
     }
     else{
         try{
