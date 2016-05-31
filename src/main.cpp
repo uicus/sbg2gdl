@@ -10,7 +10,7 @@
 int main(int argc, const char** argv){
     if(argc < 2){
         std::cerr<<"No input specified"<<std::endl;
-        std::cerr<<"Usage: \"sbg2gdl input_file [flags]\""<<std::endl;
+        std::cerr<<"Usage: \"sbg2gdl [flags] input_file\""<<std::endl;
         std::cerr<<"Available flags:"<<std::endl;
         std::cerr<<"\"-o output_file\" - write output to file with given name; defaults to \"a.gdl\""<<std::endl;
         std::cerr<<"\"-v\" - just verify input; do not generate output file"<<std::endl;
@@ -27,8 +27,8 @@ int main(int argc, const char** argv){
     }
     else{
         try{
-            std::string input_file_name(argv[1]);
-            options o(argc-2, argv+2);
+            std::string input_file_name(argv[argc-1]);
+            options o(argc-2, argv+1);
             std::vector<warning> warnings_list;
             game g = parse_game(input_file_name, warnings_list);
             if((!o.escalating_warnings() || warnings_list.size() == 0) && o.verifying())
