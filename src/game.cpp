@@ -170,7 +170,7 @@ void game::write_terminal_state(std::ofstream& out, const options& o)const{
     }
 }
 
-void game::write_goals(std::ofstream& out)const{
+void game::write_goals(std::ofstream& out, const options& o)const{
     out<<"(<= (goal "<<player_name(true)<<" 100)\n\tlowerHasNoPieces)\n";
     out<<"(<= (goal "<<player_name(false)<<" 100)\n\tupperHasNoPieces)\n";
     out<<"(<= (goal "<<player_name(true)<<" 0)\n\tupperHasNoPieces)\n";
@@ -196,6 +196,7 @@ void game::write_goals(std::ofstream& out)const{
     if(uppercase_player_goals.has_any_capture_goal())
         out<<"(<= (goal "<<player_name(false)<<" 0)\n\t(capturedEnoughToWin "<<player_name(true)<<"))\n";
     out<<"\n(<= (goal "<<player_name(false)<<" 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
+    out<<"\n\t(true (step"<<number(turns_limit+1, turns_limit+1, o.logarithmic_counter())<<"))";
     if(lowercase_player_goals.has_any_breakthrough_goal())
         out<<"\n\t(not lowercaseBrokeThrough)";
     if(uppercase_player_goals.has_any_breakthrough_goal())
@@ -206,6 +207,29 @@ void game::write_goals(std::ofstream& out)const{
         out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
     out<<")\n";
     out<<"\n(<= (goal "<<player_name(true)<<" 50)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
+    out<<"\n\t(true (step"<<number(turns_limit+1, turns_limit+1, o.logarithmic_counter())<<"))";
+    if(lowercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not lowercaseBrokeThrough)";
+    if(uppercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not uppercaseBrokeThrough)";
+    if(lowercase_player_goals.has_any_capture_goal())
+        out<<"\n\t(not (capturedEnoughToWin lowercasePlayer))";
+    if(uppercase_player_goals.has_any_capture_goal())
+        out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
+    out<<")\n";
+    out<<"\n(<= (goal "<<player_name(false)<<" 0)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
+    out<<"\n\t(not (true (step"<<number(turns_limit+1, turns_limit+1, o.logarithmic_counter())<<")))";
+    if(lowercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not lowercaseBrokeThrough)";
+    if(uppercase_player_goals.has_any_breakthrough_goal())
+        out<<"\n\t(not uppercaseBrokeThrough)";
+    if(lowercase_player_goals.has_any_capture_goal())
+        out<<"\n\t(not (capturedEnoughToWin lowercasePlayer))";
+    if(uppercase_player_goals.has_any_capture_goal())
+        out<<"\n\t(not (capturedEnoughToWin uppercasePlayer))";
+    out<<")\n";
+    out<<"\n(<= (goal "<<player_name(true)<<" 0)\n\tlowerHasSomePiece\n\tupperHasSomePiece\n\tlowerHasLegalMove\n\tupperHasLegalMove";
+    out<<"\n\t(not (true (step"<<number(turns_limit+1, turns_limit+1, o.logarithmic_counter())<<")))";
     if(lowercase_player_goals.has_any_breakthrough_goal())
         out<<"\n\t(not lowercaseBrokeThrough)";
     if(uppercase_player_goals.has_any_breakthrough_goal())
@@ -277,7 +301,7 @@ void game::write_as_gdl(const std::string& output_file_name, const options& o){
     write_terminal_state(out, o);
     if(!o.skip_comments())
         out<<subsection("Goals");
-    write_goals(out);
+    write_goals(out, o);
     if(!o.skip_comments())
         out<<subsection("Moves repetition counter");
     write_moves_succ(out);

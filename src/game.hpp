@@ -34,7 +34,7 @@ class game{
         void write_pieces_definition(std::ofstream& out, const options& o)const;
         void write_next_state_logic(std::ofstream& out, const options& o)const;
         void write_terminal_state(std::ofstream& out, const options& o)const;
-        void write_goals(std::ofstream& out)const;
+        void write_goals(std::ofstream& out, const options& o)const;
         void write_moves_succ(std::ofstream& out)const;
         uint max_number_of_repetitions(void)const;
     public:
