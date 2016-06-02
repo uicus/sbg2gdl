@@ -257,8 +257,10 @@ uint game::max_number_of_repetitions(void)const{
     return current_max;
 }
 
-void game::write_as_gdl(const std::string& output_file_name, const options& o){
+void game::write_as_gdl(const std::string& output_file_name, const options& o)throw(wrong_argument_error){
     std::ofstream out(output_file_name);
+    if(!out.good())
+        throw wrong_argument_error("Couldn't open file "+output_file_name);
     if(!o.skip_comments()){
         out<<separator;
         out<<";; "<<name<<'\n';

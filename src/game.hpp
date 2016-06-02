@@ -42,7 +42,7 @@ class game{
 
         friend game parse_game(const std::string& file_name, std::vector<warning>& warnings_list)throw(parse_error);
 
-        void write_as_gdl(const std::string& output_file_name, const options& o);
+        void write_as_gdl(const std::string& output_file_name, const options& o)throw(wrong_argument_error);
 };
 
 game parse_game(const std::string& file_name, std::vector<warning>& warnings_list)throw(parse_error);
