@@ -85,6 +85,16 @@ void piece::scan_for_subsums(const piece& second, reuse_tool& known, bool upperc
 }
 
 void piece::write_as_gdl(std::ofstream& out, bool uppercase, reuse_tool& known_moves, const options& o)const{
+    moves_concatenation move_on_enemy;
+    moves_concatenation move_on_empty;
+    move_on_enemy.append(bracketed_move(single_move(0,0,on::enemy)));
+    move_on_empty.append(bracketed_move(single_move(0,0,on::empty)));
+    move empty_move1;
+    move empty_move2;
+    empty_move1.append(std::move(move_on_empty));
+    empty_move2.append(std::move(move_on_enemy));
+    if(move_pattern==empty_move1 || move_pattern==empty_move2)
+        return;
     std::vector<std::pair<uint, move>> additional_moves;
     std::vector<std::pair<uint, bracketed_move>> additional_bracketed_moves;
     additional_moves.push_back(std::make_pair(0,move_pattern));
