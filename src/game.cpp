@@ -32,7 +32,7 @@ game parse_game(const std::string& file_name, std::vector<warning>& warnings_lis
         game_name.push_back(p.expect_plain_char());
     p.expect_whitespace();
     std::pair<board, std::unordered_set<char>> board_result = parse_board(p, warnings_list);
-    std::vector<piece> piece_moves = parse_pieces(p, warnings_list, board_result.second);
+    std::vector<piece> piece_moves = parse_pieces(p, warnings_list, board_result.second, board_result.first);
     std::pair<uint, std::pair<goals, goals>> g = parse_goals(p, warnings_list, board_result.second, board_result.first);
     p.expect_whitespace();
     if(!p.expect_end_of_file())
@@ -84,6 +84,8 @@ void game::write_initial_state(std::ofstream& out, const options& o)const{
     out<<"\n(init (step"<<number(1, turns_limit+1, o.logarithmic_counter())<<"))\n";
 }
 
+#include<iostream>
+
 void game::write_pieces_definition(std::ofstream& out, const options& o)const{
     if(o.logarithmic_counter()){
         out<<"(<= (control "<<player_name(true)<<")\n\t(true (step"<<variable("x", (turns_limit+1)/2, o.logarithmic_counter())<<" 0)))\n";
@@ -112,7 +114,7 @@ void game::write_pieces_definition(std::ofstream& out, const options& o)const{
         known_uppercase_moves.delete_singletons();
         known_lowercase_moves.delete_singletons();
     }
-    if(o.share_sums()){
+    if(o.share_sums() && !piece_moves.empty()){
         auto almost_end = piece_moves.end();
         --almost_end;
         for(auto i=piece_moves.begin();i!=almost_end;++i)

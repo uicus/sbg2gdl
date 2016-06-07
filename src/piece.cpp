@@ -32,7 +32,8 @@ char piece::get_symbol(void)const{
 std::vector<piece> parse_pieces(
     parser& p,
     std::vector<warning>& warnings_list,
-    const std::unordered_set<char>& declared_pieces)throw(piece_parse_error){
+    const std::unordered_set<char>& declared_pieces,
+    const board& brd)throw(piece_parse_error){
     std::vector<piece> result;
     std::unordered_set<char> parsed_pieces;
     if(!p.expect_string("<PIECES>"))
@@ -54,6 +55,8 @@ std::vector<piece> parse_pieces(
             warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "Undeclared piece (piece doesn't appear in the previous board declaration), ignoring this definition"));
         }
         p.expect_whitespace();
+        uint piece_line = p.get_line_number();
+        uint piece_char = p.get_char_in_line_number();
         parser_result<move> move_pattern_result = p.expect_move_pattern();
         if(!move_pattern_result)
             throw piece_parse_error(move_pattern_result.info.line_number, move_pattern_result.info.char_number, move_pattern_result.info.human_readable_info.c_str());
@@ -61,13 +64,22 @@ std::vector<piece> parse_pieces(
         if(p.expect_plain_char()!='&')
             throw piece_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Move pattern must be terminated with \'&\'");
         p.expect_whitespace();
+        uint cutting_result = move_pattern_result.result.cut_unnecessary_moves(brd.get_width(),brd.get_height());
+        if(cutting_result==2){
+            warnings_list.push_back(warning(piece_line,piece_char, "Every move matching this pattern will not fit in the board, ignoring this definition"));
+            ignore = true;
+        }
+        else if(cutting_result==1)
+            warnings_list.push_back(warning(piece_line,piece_char, "This pattern contains too big atomic moves"));
         if(!ignore){
             result.push_back(piece(next_char, std::move(move_pattern_result.result)));
             parsed_pieces.insert(next_char);
         }
     }
     p.go_back();
-    if(declared_pieces.size() > parsed_pieces.size())
+    if(result.empty())
+        warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "There is no piece with any legal move"));
+    else if(declared_pieces.size() > parsed_pieces.size())
         warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "There are some pieces without definitions remaining at the end of pieces segment"));
     return result;
 }

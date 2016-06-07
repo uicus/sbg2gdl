@@ -58,6 +58,8 @@ std::pair<board, std::unordered_set<char>> parse_board(
     p.expect_whitespace();
     board result(width_result.result, height_result.result);
     std::vector<uint> expected_fields_alignment(result.width);
+    bool upper_has_some_piece = false;
+    bool lower_has_some_piece = false;
     char next_char;
     uint line_number = p.get_line_number();
     if(!p.expect_plain_char('|'))
@@ -66,10 +68,14 @@ std::pair<board, std::unordered_set<char>> parse_board(
     for(uint i=0;i<result.width;++i){
         next_char = p.expect_plain_char();
         if(next_char!='.'){
-            if(isupper(next_char))
+            if(isupper(next_char)){
+                upper_has_some_piece = true;
                 result.fields[result.fields.size()-1][i] = std::make_pair(true, next_char);
-            else if(islower(next_char))
+            }
+            else if(islower(next_char)){
+                lower_has_some_piece = true;
                 result.fields[result.fields.size()-1][i] = std::make_pair(false, toupper(next_char));
+            }
             else
                 throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected \'.\' or letter");
             pieces_set.insert(toupper(next_char));
@@ -91,10 +97,14 @@ std::pair<board, std::unordered_set<char>> parse_board(
         for(uint j=0;j<result.width;++j){
             next_char = p.expect_plain_char();
             if(next_char!='.'){
-                if(isupper(next_char))
+                if(isupper(next_char)){
+                    upper_has_some_piece = true;
                     result.fields[result.fields.size()-i-1][j] = std::make_pair(true, next_char);
-                else if(islower(next_char))
+                }
+                else if(islower(next_char)){
+                    lower_has_some_piece = true;
                     result.fields[result.fields.size()-i-1][j] = std::make_pair(false, toupper(next_char));
+                }
                 else
                     throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Expected \'.\' or letter");
                 pieces_set.insert(toupper(next_char));
@@ -113,6 +123,10 @@ std::pair<board, std::unordered_set<char>> parse_board(
             throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Every row should end with \'|\'");
         p.expect_whitespace();
     }
+    if(!upper_has_some_piece)
+        warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "There was no uppercase piece on the board"));
+    if(!lower_has_some_piece)
+        warnings_list.push_back(warning(p.get_line_number(), p.get_char_in_line_number(), "There was no lowercase piece on the board"));
     return std::make_pair(std::move(result), std::move(pieces_set));
 }
 

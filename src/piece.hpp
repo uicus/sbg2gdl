@@ -9,6 +9,7 @@
 #include"parser.hpp"
 #include"parser_events.hpp"
 #include"options.hpp"
+#include"board.hpp"
 
 class piece_parse_error : public parse_error{
     public:
@@ -38,6 +39,7 @@ class piece{
 std::vector<piece> parse_pieces(
     parser& p,
     std::vector<warning>& warnigns_list,
-    const std::unordered_set<char>& declared_pieces)throw(piece_parse_error);
+    const std::unordered_set<char>& declared_pieces,
+    const board& brd)throw(piece_parse_error);
 
 #endif

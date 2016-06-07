@@ -226,6 +226,10 @@ bool single_move::operator<(const single_move& m2)const{
         || (x_delta == m2.x_delta && y_delta == m2.y_delta && kind < m2.kind);
 }
 
+bool single_move::is_too_big(uint board_width, uint board_height)const{
+    return board_width<=abs(x_delta) || board_height<=abs(y_delta);
+}
+
 void single_move::write_as_gdl(
     std::ofstream& out,
     bool uppercase_player,
@@ -433,6 +437,22 @@ void moves_sum::scan_for_subsums(const moves_sum& second, reuse_tool& known, boo
         el.scan_for_subsums(second, known, uppercase);
 }
 
+uint moves_sum::cut_unnecessary_moves(uint board_width, uint board_height){
+    uint result = 0;
+    std::set<moves_concatenation> temp = std::move(m);
+    while(!temp.empty()){
+        moves_concatenation current = std::move(*temp.begin());
+        temp.erase(temp.begin());
+        if(current.cut_unnecessary_moves(board_width,board_height)==2)
+            result = 1;
+        else
+            m.insert(std::move(current));
+    }
+    if(m.empty())
+        result = 2;
+    return result;
+}
+
 void moves_sum::write_as_gdl(
     std::ofstream& out,
     std::vector<std::pair<uint, move>>& additional_moves_to_write,
@@ -586,6 +606,13 @@ void moves_concatenation::scan_for_concatenations(reuse_tool& known)const{
 void moves_concatenation::scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const{
     for(const auto& el: m)
         el.scan_for_subsums(second, known, uppercase);
+}
+
+uint moves_concatenation::cut_unnecessary_moves(uint board_width, uint board_height){
+    for(auto& el: m)
+        if(el.cut_unnecessary_moves(board_width,board_height)==2)
+            return 2;
+    return 0;
 }
 
 void moves_concatenation::write_as_gdl(
@@ -880,6 +907,13 @@ void bracketed_move::scan_for_concatenations(reuse_tool& known)const{
 void bracketed_move::scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const{
     if(sum)
         m_sum->scan_for_subsums(second, known, uppercase);
+}
+
+uint bracketed_move::cut_unnecessary_moves(uint board_width, uint board_height){
+    if(sum)
+        return m_sum->cut_unnecessary_moves(board_width,board_height);
+    else
+        return single_m->is_too_big(board_width,board_height) ? 2 : 0;
 }
 
 void bracketed_move::write_as_gdl(

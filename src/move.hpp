@@ -80,6 +80,8 @@ class single_move{
         bool operator==(const single_move& m2)const;
         bool operator<(const single_move& m2)const;
 
+        bool is_too_big(uint board_width, uint board_height)const;
+
         void write_as_gdl(
             std::ofstream& out,
             bool uppercase_player,
@@ -119,6 +121,8 @@ class moves_sum{
         void scan_for_concatenations(reuse_tool& known)const;
         void scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const;
 
+        uint cut_unnecessary_moves(uint board_width, uint board_height);// 0 -> no cuts; 1 -> cut something; 2 -> cut everything
+
         void write_as_gdl(
             std::ofstream& out,
             std::vector<std::pair<uint, move>>& additional_moves_to_write,
@@ -157,6 +161,8 @@ class moves_concatenation{
         moves_concatenation sub_move(uint begin, uint end)const;
         void scan_for_concatenations(reuse_tool& known)const;
         void scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const;
+
+        uint cut_unnecessary_moves(uint board_width, uint board_height);// 0 -> no cuts; 1 -> cut something; 2 -> cut everything
 
         void write_as_gdl(
             std::ofstream& out,
@@ -218,6 +224,8 @@ class bracketed_move{
 
         void scan_for_concatenations(reuse_tool& known)const;
         void scan_for_subsums(const moves_sum& second, reuse_tool& known, bool uppercase)const;
+
+        uint cut_unnecessary_moves(uint board_width, uint board_height);// 0 -> no cuts; 1 -> cut something; 2 -> cut everything
 
         void write_as_gdl(
             std::ofstream& out,
