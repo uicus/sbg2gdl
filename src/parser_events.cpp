@@ -22,7 +22,7 @@ const char* parse_error::what(void)const noexcept{
 }
 
 std::string parse_error::to_string(void)const{
-    return "General parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": "+description;
+    return (line_number==0 && char_number==0 ? "":"General parse error, line "+std::to_string(line_number)+", character "+std::to_string(char_number)+": ")+description;
 }
 
 warning::warning(uint line, uint column, const std::string& src):
