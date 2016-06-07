@@ -910,10 +910,12 @@ void bracketed_move::scan_for_subsums(const moves_sum& second, reuse_tool& known
 }
 
 uint bracketed_move::cut_unnecessary_moves(uint board_width, uint board_height){
+    if(number_of_repetitions == 0)
+        return 0;
     if(sum)
-        return m_sum->cut_unnecessary_moves(board_width,board_height);
+        return m_sum->cut_unnecessary_moves((board_width-1)/number_of_repetitions+1,(board_height-1)/number_of_repetitions+1);
     else
-        return single_m->is_too_big(board_width,board_height) ? 2 : 0;
+        return single_m->is_too_big((board_width-1)/number_of_repetitions+1,(board_height-1)/number_of_repetitions+1) ? 2 : 0;
 }
 
 void bracketed_move::write_as_gdl(

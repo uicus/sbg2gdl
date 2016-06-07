@@ -31,12 +31,12 @@ int main(int argc, const char** argv){
             options o(argc-2, argv+1);
             std::vector<warning> warnings_list;
             game g = parse_game(input_file_name, warnings_list);
-            if((!o.escalating_warnings() || warnings_list.size() == 0) && o.verifying())
-                std::cout<<"Verification successful"<<std::endl;
             if(o.showing_warnings() || o.escalating_warnings())
                 for(auto const& w: warnings_list)
                     std::cerr<<w.to_string(o.escalating_warnings())<<std::endl;
-            if(!o.verifying()){
+            if((!o.escalating_warnings() || warnings_list.size() == 0) && o.verifying())
+                std::cout<<"Verification successful"<<std::endl;
+            if(!o.verifying() && (!o.escalating_warnings() || warnings_list.size() == 0)){
                 g.write_as_gdl(o.output_file(), o);
                 std::cout<<"Produced "<<o.output_file()<<std::endl;
             }
