@@ -33,11 +33,11 @@ std::vector<piece> parse_pieces(
     parser& p,
     std::vector<warning>& warnings_list,
     const std::unordered_set<char>& declared_pieces,
-    const board& brd)throw(piece_parse_error){
+    const board& brd)throw(piece_parse_error,parse_error){
     std::vector<piece> result;
     std::unordered_set<char> parsed_pieces;
     if(!p.expect_string("<PIECES>"))
-        throw piece_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Pieces segment must begin with \'<PIECES>\' string");
+        throw parse_error(p.get_line_number(), p.get_char_in_line_number(), "Pieces segment must begin with \'<PIECES>\' string");
     p.expect_whitespace();
     char next_char;
     bool ignore;

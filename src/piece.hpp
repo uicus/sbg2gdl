@@ -40,6 +40,6 @@ std::vector<piece> parse_pieces(
     parser& p,
     std::vector<warning>& warnigns_list,
     const std::unordered_set<char>& declared_pieces,
-    const board& brd)throw(piece_parse_error);
+    const board& brd)throw(piece_parse_error,parse_error);
 
 #endif

@@ -84,8 +84,6 @@ void game::write_initial_state(std::ofstream& out, const options& o)const{
     out<<"\n(init (step"<<number(1, turns_limit+1, o.logarithmic_counter())<<"))\n";
 }
 
-#include<iostream>
-
 void game::write_pieces_definition(std::ofstream& out, const options& o)const{
     if(o.logarithmic_counter()){
         out<<"(<= (control "<<player_name(true)<<")\n\t(true (step"<<variable("x", (turns_limit+1)/2, o.logarithmic_counter())<<" 0)))\n";

@@ -29,7 +29,7 @@ class board{
         bool inside(uint x, uint y)const;
         uint get_width(void)const;
         uint get_height(void)const;
-        friend std::pair<board, std::unordered_set<char>> parse_board(parser& p, std::vector<warning>& warnigns_list)throw(board_parse_error);
+        friend std::pair<board, std::unordered_set<char>> parse_board(parser& p, std::vector<warning>& warnigns_list)throw(board_parse_error,parse_error);
         void write_initial_state(std::ofstream& out)const;
         void write_ranks_logic(std::ofstream& out)const;
         void write_files_logic(std::ofstream& out)const;
@@ -37,6 +37,6 @@ class board{
 
 std::pair<board, std::unordered_set<char>> parse_board(
     parser& p,
-    std::vector<warning>& warnigns_list)throw(board_parse_error);
+    std::vector<warning>& warnigns_list)throw(board_parse_error,parse_error);
 
 #endif

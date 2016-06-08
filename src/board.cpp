@@ -38,10 +38,10 @@ uint board::get_height(void)const{
 
 std::pair<board, std::unordered_set<char>> parse_board(
     parser& p,
-    std::vector<warning>& warnings_list)throw(board_parse_error){
+    std::vector<warning>& warnings_list)throw(board_parse_error,parse_error){
     std::unordered_set<char> pieces_set;
     if(!p.expect_string("<BOARD>"))
-        throw board_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Board segment must begin with \'<BOARD>\' string");
+        throw parse_error(p.get_line_number(), p.get_char_in_line_number(), "Board segment must begin with \'<BOARD>\' string");
     p.expect_whitespace();
     parser_result<int> width_result = p.expect_int();
     if(!width_result)

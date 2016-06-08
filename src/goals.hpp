@@ -40,6 +40,6 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
     parser& p,
     std::vector<warning>& warnings_list,
     const std::unordered_set<char>& declared_pieces,
-    const board& declared_board)throw(goals_parse_error);
+    const board& declared_board)throw(goals_parse_error,parse_error);
 
 #endif

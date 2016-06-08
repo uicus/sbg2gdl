@@ -39,12 +39,12 @@ std::pair<uint, std::pair<goals, goals>> parse_goals(
     parser& p,
     std::vector<warning>& warnings_list,
     const std::unordered_set<char>& declared_pieces,
-    const board& declared_board)throw(goals_parse_error){
+    const board& declared_board)throw(goals_parse_error,parse_error){
     uint turns_limit;
     goals uppercase_player_goals;
     goals lowercase_player_goals;
     if(!p.expect_string("<GOALS>"))
-        throw goals_parse_error(p.get_line_number(), p.get_char_in_line_number(), "Goals segment must begin with \'<GOALS>\' string");
+        throw parse_error(p.get_line_number(), p.get_char_in_line_number(), "Goals segment must begin with \'<GOALS>\' string");
     p.expect_whitespace();
     parser_result<int> turns_limit_result = p.expect_int();
     if(!turns_limit_result)
