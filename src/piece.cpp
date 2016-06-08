@@ -70,7 +70,7 @@ std::vector<piece> parse_pieces(
             ignore = true;
         }
         else if(cutting_result==1)
-            warnings_list.push_back(warning(piece_line,piece_char, "This pattern contains too big atomic moves"));
+            warnings_list.push_back(warning(piece_line,piece_char, "This pattern contains too large offsets in atomic moves"));
         if(!ignore){
             result.push_back(piece(next_char, std::move(move_pattern_result.result)));
             parsed_pieces.insert(next_char);
